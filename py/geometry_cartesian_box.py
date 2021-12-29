@@ -11,6 +11,30 @@ import geometry
 
 
 class CartesianBox(geometry.Geometry):
+    '''
+    The familiar geometry - a box with Cartesian coordinates.
+    
+    Attributes
+    ----------
+    x : numpy array (2 x ndim)
+        First and second rows give coordinates of opposing corners of the 
+        box, thereby defining the boundaries of the box.
+    L : numpy array (ndim)
+        Edge length of the system boundary in each dimension.
+    ndim : int
+        Number of dimensions of the system.
+    
+    
+    Methods
+    -------
+    distance(r1,r2) :
+        Return a triple of distance, distance squared, and displacement vector
+        from r1 to r2.
+    wrap_position(r1,im1) :
+        Return coordinate array and image array obtained from wrapping back 
+        into the "central" replica of the box (for periodic systems).
+        
+    '''
     
     def __init__(self,x,bcs):
         if not x.ndim == 2:

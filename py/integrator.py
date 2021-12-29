@@ -23,9 +23,10 @@ class Integrator():
 
 
 
-class IntegratorMC_mu_geom_T_1():
+class IntegratorMC_mu_geom_T_1(Integrator):
     
     def __init__(self,at,mu,geom,T,max_move):
+        super().__init__(at)
         self.mu = mu
         self.geom = geom
         self.T = T
