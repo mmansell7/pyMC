@@ -8,6 +8,7 @@ Created on Fri Oct  8 09:23:19 2021
 
 import warnings
 import numpy as np
+
 import atom_listener
 
 
@@ -50,7 +51,9 @@ class Neighbor(atom_listener.AtomListener):
     
     def __init__(self,mc,at):
         super().__init__(at)
+        self.at.primary_neigh = self
         self.mc = mc
+        self.mc.neigh = self
         self.last_build = None
         self.nmax = None
         self.l = None
@@ -95,7 +98,9 @@ class Neighbor(atom_listener.AtomListener):
         raise NotImplementedError('Subclasses of Neighbor must implement a ' +
                                   'calc_one_atom method.')
     
-    
+
+
+
 class NeighborClass0(Neighbor):
     '''
     Calculates distance between every pair on every build.

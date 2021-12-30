@@ -8,7 +8,6 @@ Created on Tue Oct  5 10:59:53 2021
 
 import numpy as np
 import external
-import geometry
 import geometry_cartesian_box
 
 class ExternalWall(external.External):

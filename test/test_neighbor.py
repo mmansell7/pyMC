@@ -11,12 +11,12 @@ import numpy as np
 import pytest
 
 import sys
-sys.path.append('../py')
-import neighbor
-import atom
+sys.path.append('../src')
 import geometry_cartesian_box
-import pair_lj_cut
+import atom
+import neighbor
 import integrator
+import pair_lj_cut
 
 class TestNeighbor():
     
@@ -27,7 +27,8 @@ class TestNeighbor():
         at = atom.Atom(g,3)
         at.add_atom(np.array([0.0,0.0,0.0]),np.array([1,2,0],dtype='int'),'0')
         at.add_atom(np.array([1.0,1.0,1.0]),np.array([11,12,0],dtype='int'),'1')
-        neigh = neighbor.Neighbor(None,at)
+        grat = integrator.IntegratorMC_mu_geom_T_1(at,1.0,g,1.0,0.1,0)
+        neigh = neighbor.Neighbor(grat,at)
         with pytest.raises(NotImplementedError) as excinfo:
             neigh.calc_one_atom(0)
         with pytest.raises(NotImplementedError) as excinfo:
@@ -53,7 +54,8 @@ class TestNeighborClass0():
         at = atom.Atom(g,3)
         at.add_atom(np.array([0.0,0.0,0.0]),np.array([1,2,0],dtype='int'),'0')
         at.add_atom(np.array([1.0,1.0,1.0]),np.array([11,12,0],dtype='int'),'1')
-        neigh = neighbor.NeighborClass0(None,at,g,5)
+        grat = integrator.IntegratorMC_mu_geom_T_1(at,1.0,g,1.0,0.1,0)
+        neigh = neighbor.NeighborClass0(grat,at,g,5)
         assert neigh.geom == g
         assert neigh.at == at
         assert neigh.at.neighbors[0] == neigh
@@ -68,7 +70,7 @@ class TestNeighborClass0():
         at = atom.Atom(g,3)
         at.add_atom(np.array([0.0,0.0,0.0]),np.array([1,2,0],dtype='int'),'0')
         at.add_atom(np.array([1.0,1.0,1.0]),np.array([11,12,0],dtype='int'),'1')
-        mc = integrator.IntegratorMC_mu_geom_T_1(at,1.0,g,1.0,0.1)
+        mc = integrator.IntegratorMC_mu_geom_T_1(at,1.0,g,1.0,0.1,0)
         neigh = neighbor.NeighborClass0(mc,at,g,5)
         mo = neigh.minus_one
         p = pair_lj_cut.PairLJCut(1.0,1.0,5.0)
@@ -94,7 +96,7 @@ class TestNeighborClass0():
         at.add_atom(np.array([5.4,5.4,5.4]),np.array([11,12,0],dtype='int'),'0')
         at.add_atom(np.array([9.7,9.7,9.7]),np.array([11,12,0],dtype='int'),'0')
         at.add_atom(np.array([9.8,9.8,9.8]),np.array([11,12,0],dtype='int'),'0')
-        mc = integrator.IntegratorMC_mu_geom_T_1(at,1.0,g,1.0,0.1)
+        mc = integrator.IntegratorMC_mu_geom_T_1(at,1.0,g,1.0,0.1,0)
         neigh = neighbor.NeighborClass0(mc,at,g,5)
         mo = neighbor.Neighbor.minus_one
         p = pair_lj_cut.PairLJCut(1.0,1.0,5.0)
@@ -135,7 +137,7 @@ class TestNeighborClassMC():
         at.add_atom(np.array([1.0,1.0,1.0]),np.array([11,12,0],dtype='int'),'1')
         p = pair_lj_cut.PairLJCut(1.0,1.0,5.0)
         at.pair_type[('0','1')] = p
-        mc = integrator.IntegratorMC_mu_geom_T_1(at,1.0,g,1.0,0.1)
+        mc = integrator.IntegratorMC_mu_geom_T_1(at,1.0,g,1.0,0.1,0)
         neigh = neighbor.NeighborClassMC(mc,at,g,5,np.array([1,1,1]),7.5)
         assert neigh.geom == g
         assert neigh.at == at
@@ -151,7 +153,7 @@ class TestNeighborClassMC():
         at = atom.Atom(g,3)
         at.add_atom(np.array([0.0,0.0,0.0]),np.array([1,2,0],dtype='int'),'0')
         at.add_atom(np.array([1.0,1.0,1.0]),np.array([11,12,0],dtype='int'),'1')
-        mc = integrator.IntegratorMC_mu_geom_T_1(at,1.0,g,1.0,0.1)
+        mc = integrator.IntegratorMC_mu_geom_T_1(at,1.0,g,1.0,0.1,0)
         neigh = neighbor.NeighborClassMC(mc,at,g,5,np.array([1,1,1]),7.5)
         mo = neigh.minus_one
         p = pair_lj_cut.PairLJCut(1.0,1.0,5.0)
@@ -179,7 +181,7 @@ class TestNeighborClassMC():
         at.add_atom(np.array([9.8,9.8,9.8]),np.array([11,12,0],dtype='int'),'0')
         p = pair_lj_cut.PairLJCut(1.0,1.0,5.0)
         at.pair_type[('0','0')] = p
-        mc = integrator.IntegratorMC_mu_geom_T_1(at,1.0,g,1.0,0.1)
+        mc = integrator.IntegratorMC_mu_geom_T_1(at,1.0,g,1.0,0.1,0)
         mo = neighbor.Neighbor.minus_one
         
         neigh = neighbor.NeighborClassMC(mc,at,g,5,np.array([1,1,1]),7.5)
@@ -295,7 +297,7 @@ class TestNeighborClassMC():
         at.add_atom(np.array([ -9.99,-9.99, -9.99]),np.array([0,0,0],dtype='int'),'0')
         p = pair_lj_cut.PairLJCut(1.0,1.0,5.0)
         at.pair_type[('0','0')] = p
-        mc = integrator.IntegratorMC_mu_geom_T_1(at,1.0,g,1.0,0.1)
+        mc = integrator.IntegratorMC_mu_geom_T_1(at,1.0,g,1.0,0.1,0)
         mo = neighbor.Neighbor.minus_one
         
         neigh = neighbor.NeighborClassMC(mc,at,g,5,np.array([1,1,1]),1.01*0.02*np.sqrt(3))

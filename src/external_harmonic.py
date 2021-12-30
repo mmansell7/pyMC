@@ -8,7 +8,6 @@ Created on Tue Oct  5 09:10:18 2021
 
 import numpy as np
 import external
-import geometry
 
 class ExternalHarmonic(external.External):
     

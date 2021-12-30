@@ -10,10 +10,9 @@ import numpy as np
 import pytest
 
 import sys
-sys.path.append('../py')
+sys.path.append('../src')
 import geometry_cartesian_box
 import atom
-import neighbor
 
 class TestAtom():
     

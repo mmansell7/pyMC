@@ -25,6 +25,7 @@ class PairLJCut(pair.Pair):
         self.rc2 = np.square(self.rc)
     
     def phi(self,rsq):
+        print('From PairLJCut, calculating phi(rsq={}).'.format(rsq))
         if rsq >= self.rc2:
             return 0.0,0.0
         rsqinv = self.sigma2/rsq
@@ -32,6 +33,7 @@ class PairLJCut(pair.Pair):
         r12   = np.square(r6)
         en    = 4.0*self.epsilon*(r12-r6)
         f     = 24.0*self.epsilon/rsq*(2.0*r12-r6) # This is f/r, NOT f
+        print('Returning f/r = {}'.format(f))
         return en,f
     
     

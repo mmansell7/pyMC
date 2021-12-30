@@ -12,10 +12,8 @@ Created on Fri Oct  8 09:17:23 2021
 import pytest
 
 import sys
-sys.path.append('../py')
+sys.path.append('./')
 import atom_type
-
-
 
 
 class TestAtomType():

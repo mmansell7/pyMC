@@ -8,8 +8,6 @@ Created on Mon Oct 25 16:55:49 2021
 
 import atom
 
-
-
 class AtomListener():
     
     def __init__(self,at):
