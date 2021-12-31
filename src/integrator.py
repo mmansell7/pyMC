@@ -12,18 +12,33 @@ import neighbor
 
 class Integrator():
     
-    def __init__(self,at,seed):
+    def __init__(self,at,seed,trials,probs):
         self.rng = np.random.default_rng(seed=seed)
         self.at = at
         self.neigh = None
+        self.trials = trials
+        self.probs = probs
         self.stepnum = 0
         pass
     
+    @property
+    def trials(self):
+        return self.__trials
+    
+    @trials.setter
+    def trials(self,vals):
+        for tr in vals:
+            tr.grat = self
+        self.__trials = vals
+        return
     
     def step(self):
-        raise NotImplementedError('Child classes of Integrator must ' +
-                    'implement')
-
+        # raise NotImplementedError('Child classes of Integrator must ' +
+        #             'implement')
+        tr = self.rng.choice(self.trials,p=self.probs)
+        tr.execute()
+        self.stepnum += 1
+        return
 
 
 class IntegratorMC_mu_geom_T_1(Integrator):
