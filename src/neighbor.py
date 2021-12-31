@@ -33,6 +33,7 @@ class Neighbor(atom_listener.AtomListener):
     l : numpy array (2D)
         List of neighbor pairs. First index is the index of the "i" particle.
         l[i] is then an array of the indexes of i's neighbors. If l[i][q] = 
+    cutoff : 
     
     Methods
     -------
@@ -49,8 +50,9 @@ class Neighbor(atom_listener.AtomListener):
     
     minus_one = np.array([-1],dtype='uint32')[0]
     
-    def __init__(self,mc,at):
+    def __init__(self,mc,at,cutoff):
         super().__init__(at)
+        self.cutoff = cutoff
         self.at.primary_neigh = self
         self.mc = mc
         self.mc.neigh = self
@@ -76,13 +78,17 @@ class Neighbor(atom_listener.AtomListener):
         raise NotImplementedError('Subclasses of Neighbor must implement a ' +
                                   'build method.')
     
-    def calc_one_atom(self,i):
+    def calc_one_atom(self,x=None,ind=None,itype=None):
         '''
-        Return the neighbor list of a single atom.
+        Return the neighbor list of a single atom or virtual atom.
         
         Does not modify the neighbor list.  Only returns a new array
-        representing the neighbor list that would be associated with atom
-        i in its current position.
+        representing the neighbor list that would be associated with an atom
+        at position x. Use x=None to utilize the current position of atom
+        at index ind. Use ind to ignore an existing atom in the neighbor list
+        when x refers to the position of an existing atom with index ind. Use
+        ind=None when x refers to the position of a virtual (hypothetical)
+        atom.
 
         Parameters
         ----------
@@ -97,7 +103,7 @@ class Neighbor(atom_listener.AtomListener):
         
         raise NotImplementedError('Subclasses of Neighbor must implement a ' +
                                   'calc_one_atom method.')
-    
+        return
 
 
 
@@ -117,8 +123,8 @@ class NeighborClass0(Neighbor):
     
     
     '''
-        
-    def __init__(self,mc,at,geom,nmax):
+    
+    def __init__(self,mc,at,geom,nmax,cutoff):
         '''
         
         Parameters
@@ -135,7 +141,7 @@ class NeighborClass0(Neighbor):
         
         '''
         self.geom = geom
-        super().__init__(mc,at)
+        super().__init__(mc,at,cutoff)
         self.at.neighbors = [self]
         self.last_build = -1
         
@@ -174,9 +180,8 @@ class NeighborClass0(Neighbor):
         if (self.mc.stepnum > self.last_build) or kwargs.get('force',False):
             for i in range(0,self.at.n-1):
                 for j in range(i+1,self.at.n):
-                    atype   = self.at.pair_type[self.at.atype[i],self.at.atype[j]]
                     d,dsq,_ = self.geom.distance(self.at.x[i],self.at.x[j])
-                    if d < (1.5*atype.rc):
+                    if d < self.cutoff:
                         if self.nn[i] >= self.nmax:
                             warnflag += 1
                         else:
@@ -195,13 +200,17 @@ class NeighborClass0(Neighbor):
         
         return
     
-    def calc_one_atom(self,i):
+    def calc_one_atom(self,x=None,ind=None):
         '''
-        Return the neighbor list of a single atom.
+        Return the neighbor list of a single atom or virtual atom.
         
         Does not modify the neighbor list.  Only returns a new array
-        representing the neighbor list that would be associated with atom
-        i in its current position.
+        representing the neighbor list that would be associated with an atom
+        at position x. Use x=None to utilize the current position of atom
+        at index ind. Use ind to ignore an existing atom in the neighbor list
+        when x refers to the position of an existing atom with index ind. Use
+        ind=None when x refers to the position of a virtual (hypothetical)
+        atom.
 
         Parameters
         ----------
@@ -210,23 +219,35 @@ class NeighborClass0(Neighbor):
 
         Returns
         -------
-        None.
-
-        '''
-        l = []
-        for j in np.delete(np.array(range(0,self.at.n)),i):
-            atype   = self.at.pair_type[self.at.atype[i],self.at.atype[j]]
-            d,dsq,_ = self.geom.distance(self.at.x[i],self.at.x[j])
-            if d < (1.5*atype.rc):
-                l.append(j)
-        l = np.array(l,dtype=self.l.dtype)
-        if l.shape[0] > self.nmax:
-            warnings.warn('There were {} instances of attempts to add ' +
-                          'neighbors beyond the set maximum neighbor number.\n' +
-                          ' Those neighbors will be neglected.')
-            l = l[:self.nmax]
+        l : numpy array (1D)
+            Neighbor list for (virtual) particle.
         
-        return
+        '''
+        
+        if (x is None):
+            x = self.at.x[ind]
+            
+        l = np.empty((self.nmax),dtype='uint32')
+        l.fill(self.minus_one)
+        
+        other_atoms = list(range(0,self.n))
+        if ind in other_atoms: other_atoms.remove(ind)
+        
+        nn = 0
+        warnflag = 0
+        for j in other_atoms:
+            d,dsq,_ = self.geom.distance(x,self.at.x[j])
+            if d < self.cutoff:
+                if nn >= self.nmax:
+                    warnflag += 1
+                else:
+                    l[nn] = j
+        if warnflag:
+            warnings.warn(('There were {} instances of attempts to add ' +
+                          'neighbors beyond the set maximum neighbor number.\n' +
+                          ' Those neighbors will be neglected.').format(warnflag))
+        
+        return l
     
     def grow(self,nmax):
         new_rows = nmax - self.l.shape[0]
@@ -355,10 +376,9 @@ class NeighborClassMC(Neighbor):
 
         '''
         self.geom = geom
-        super().__init__(mc,at)
+        super().__init__(mc,at,cutoff)
         self.at.neighbors = [self]
         self.last_build = -1
-        self.cutoff = cutoff
         # self.distance = np.empty((self.at.nmax,self.nmax),dtype=float)
         # self.distance.fill(np.nan)
         # self.dist_sq  = np.empty((self.at.nmax,self.nmax),dtype=float)
@@ -496,6 +516,68 @@ class NeighborClassMC(Neighbor):
                               ' Those neighbors will be neglected.')
                     
         return
+    
+    
+    def calc_one_atom(self,x=None,ind=None):
+        '''
+        Return the neighbor list of a single atom or virtual atom.
+        
+        Does not modify the neighbor list.  Only returns a new array
+        representing the neighbor list that would be associated with an atom
+        at position x. Use x=None to utilize the current position of atom
+        at index ind. Use ind to ignore an existing atom in the neighbor list
+        when x refers to the position of an existing atom with index ind. Use
+        ind=None when x refers to the position of a virtual (hypothetical)
+        atom.
+
+        Parameters
+        ----------
+        x : numpy array or None
+            DESCRIPTION.
+        ind : {0,1,...,# of atoms} or None
+
+        Returns
+        -------
+        l : numpy array (1D)
+            Neighbor list for (virtual) particle.
+        
+        '''
+        
+        if (x is None):
+            x = self.at.x[ind]
+            
+        # Get cell index - must be done prior to pairs list
+        for cornind in range(0,self.cell_corners.shape[0]):
+            q = x - self.cell_corners[cornind]
+            if np.all(q > 0.0) and np.all(q < self.edge_lengths):
+                break
+        linki = self.cell_links[cornind]
+            
+        l = np.empty((self.nmax),dtype='uint32')
+        l.fill(self.minus_one)
+        
+        other_atoms = list(range(0,self.n))
+        if ind in other_atoms: other_atoms.remove(ind)
+        
+        nn = 0
+        warnflag = 0
+        for j in other_atoms:
+            if self.cell_list[j] not in linki:
+                continue
+            d,dsq,_ = self.geom.distance(x,self.at.x[j])
+            if d < self.cutoff:
+                if nn >= self.nmax:
+                    warnflag += 1
+                else:
+                    l[nn] = j
+        if warnflag:
+            warnings.warn(('There were {} instances of attempts to add ' +
+                          'neighbors beyond the set maximum neighbor number.\n' +
+                          ' Those neighbors will be neglected.').format(warnflag))
+        
+        return l
+    
+    
     
     def atom_translated(self,index,xold,xnew,dx):
         

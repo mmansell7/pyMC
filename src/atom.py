@@ -98,6 +98,9 @@ class Atom():
                     en_total is None):
                 if self.force is not None: self.force.update_some(np.array([self.n-1]))
             else:
+                raise NotImplementedError('The current implementation on this ' +
+                            'execution branch would fail to update particles ' +
+                            'with which the added particle interacts.')
                 self.f[self.n] = f
                 self.en_external[self.n] = en_external
                 self.en_pair[self.n] = en_pair
