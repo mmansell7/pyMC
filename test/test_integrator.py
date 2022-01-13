@@ -13,6 +13,8 @@ import pytest
 
 import sys
 sys.path.append('../src')
+
+import sim
 import geometry_cartesian_box
 import atom
 import integrator
@@ -20,65 +22,82 @@ import neighbor
 import external_wall
 import pair_lj_cut
 import force
+import trial
 
 class TestIntegrator():
     
     def test_instantiate(self):
+        mc = sim.Sim()
         x = np.array([[-10.0,-10.0,-10.0],[10.0,10.0,10.0]],dtype=float)
         bcs = np.array(['periodic','periodic','fixed'])
-        g = geometry_cartesian_box.CartesianBox(x,bcs)
-        at = atom.Atom(g,3)
-        grat = integrator.Integrator(at,seed=0)
-        
+        g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
+        at = atom.Atom(mc,3)
+        # grat = integrator.Integrator(at,seed=0)
+        grat = integrator.Integrator(mc,0)
+    
     def test_step(self):
+        mc = sim.Sim()
         x = np.array([[-10.0,-10.0,-10.0],[10.0,10.0,10.0]],dtype=float)
         bcs = np.array(['periodic','periodic','fixed'])
-        g = geometry_cartesian_box.CartesianBox(x,bcs)
-        at = atom.Atom(g,3)
-        grat = integrator.Integrator(at,seed=0)
+        g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
+        at = atom.Atom(mc,3)
+        at.add_atom(np.array([0.0,0.0,0.0]),np.array([1,2,0],dtype='int'),'0')
+        at.add_atom(np.array([1.0,1.0,1.0]),np.array([11,12,0],dtype='int'),'0')
+        ext = external_wall.ExternalWall(mc,['xlo','xhi'])
+        at.external_type['0'] = ext
+        p = pair_lj_cut.PairLJCut(1.0,1.0,5.0)
+        at.pair_type[('0','0')] = p
+        # grat = integrator.Integrator(at,seed=0)
+        grat = integrator.Integrator(mc,0)
+        neigh = neighbor.NeighborClassMC(mc,5,np.array([1,1,1]),7.5)
+        frc = force.Force(mc)
+        
+        grat.add_trial(trial.Trial_Translation(mc,1.0,'0'),1)
         
         assert grat.at == at
         assert grat.stepnum == 0
-        with pytest.raises(NotImplementedError) as excinfo:
-            grat.step()
+        grat.step()
+        
         return
     
 
 class TestIntegratorMC_mu_geom_T_1():
     
     def test_instantiate(self):
+        mc = sim.Sim()
         x = np.array([[-10.0,-10.0,-10.0],[10.0,10.0,10.0]],dtype=float)
         bcs = np.array(['periodic','periodic','fixed'])
-        g = geometry_cartesian_box.CartesianBox(x,bcs)
-        at = atom.Atom(g,3)
-        at.external_type['0'] = external_wall.ExternalWall(g,['xlo','xhi'])
+        g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
+        at = atom.Atom(mc,3)
+        at.external_type['0'] = external_wall.ExternalWall(mc,['xlo','xhi'])
         at.add_atom(np.array([0.0,0.0,0.0]),np.array([0,0,0],dtype='int'),'0')
         at.add_atom(np.array([1.0,1.0,1.0]),np.array([0,0,0],dtype='int'),'0')
         at.add_atom(np.array([2.0,2.0,2.0]),np.array([0,0,0],dtype='int'),'0')
-        grat = integrator.IntegratorMC_mu_geom_T_1(at,1.0,g,1.0,0.1,0)
+        grat = integrator.IntegratorMC_mu_geom_T_1(mc,1.0,1.0,0.1,0)
         p = pair_lj_cut.PairLJCut(1.0,1.0,5.0)
         at.pair_type[('0','0')] = p
-        neigh = neighbor.NeighborClassMC(grat,at,g,5,np.array([1,1,1]),7.5)
+        neigh = neighbor.NeighborClassMC(mc,5,np.array([1,1,1]),7.5)
         
         assert grat.at == at
         assert grat.stepnum == 0
         
         
     def test_attempt_translation(self):
+        mc = sim.Sim()
         x = np.array([[-10.0,-10.0,-10.0],[10.0,10.0,10.0]],dtype=float)
         bcs = np.array(['periodic','periodic','fixed'])
-        g = geometry_cartesian_box.CartesianBox(x,bcs)
-        at = atom.Atom(g,3)
-        at.external_type['0'] = external_wall.ExternalWall(g,['xlo','xhi'])
+        g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
+        at = atom.Atom(mc,3)
+        at.external_type['0'] = external_wall.ExternalWall(mc,['xlo','xhi'])
         at.add_atom(np.array([-0.01, 0.00, 0.00]),np.array([0,0,0],dtype='int'),'0')
         at.add_atom(np.array([ 0.00, 0.00, 0.00]),np.array([0,0,0],dtype='int'),'0')
         at.add_atom(np.array([ 0.01, 0.00, 0.00]),np.array([0,0,0],dtype='int'),'0')
-        grat = integrator.IntegratorMC_mu_geom_T_1(at,1.0,g,1.0,0.1,0)
+        grat = integrator.IntegratorMC_mu_geom_T_1(mc,1.0,1.0,0.1,0)
         grat.kB = 1.0
-        neigh = neighbor.NeighborClassMC(grat,at,g,5,np.array([1,1,1]),7.5)
+        neigh = neighbor.NeighborClassMC(mc,5,np.array([1,1,1]),7.5)
         p = pair_lj_cut.PairLJCut(1.0,1.0,5.0)
         at.pair_type[('0','0')] = p
-        frc = force.Force(grat,at)
+        frc = force.Force(mc)
         
         p.epsilon = 1.0
         p.sigma   = 1.0
@@ -165,21 +184,21 @@ class TestIntegratorMC_mu_geom_T_1():
 
 
     def test_attempt_translation_2(self):
+        mc = sim.Sim()
         x = np.array([[-10.0,-10.0,-10.0],[10.0,10.0,10.0]],dtype=float)
         bcs = np.array(['periodic','periodic','fixed'])
-        g = geometry_cartesian_box.CartesianBox(x,bcs)
-        at = atom.Atom(g,3)
-        at.external_type['0'] = external_wall.ExternalWall(g,['xlo','xhi'])
+        g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
+        at = atom.Atom(mc,3)
+        at.external_type['0'] = external_wall.ExternalWall(mc,['xlo','xhi'])
         at.add_atom(np.array([-0.01,-0.01,-0.01]),np.array([0,0,0],dtype='int'),'0')
         at.add_atom(np.array([ 0.00, 0.00, 0.00]),np.array([0,0,0],dtype='int'),'0')
         at.add_atom(np.array([ 0.01, 0.01, 0.01]),np.array([0,0,0],dtype='int'),'0')
-        grat = integrator.IntegratorMC_mu_geom_T_1(at,1.0,g,1.0,0.1,0)
+        grat = integrator.IntegratorMC_mu_geom_T_1(mc,1.0,1.0,0.1,0)
         grat.kB = 1.0
-        neigh = neighbor.NeighborClassMC(grat,at,g,5,np.array([1,1,1]),10.0)
+        neigh = neighbor.NeighborClassMC(mc,5,np.array([1,1,1]),10.0)
         p = pair_lj_cut.PairLJCut(0.6,2.3,5.0*2.3)
         at.pair_type[('0','0')] = p
-        frc = force.Force(grat,at)
-                
+        frc = force.Force(mc)
         
         p.epsilon = 0.6
         p.sigma   = 2.3

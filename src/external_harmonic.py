@@ -11,10 +11,10 @@ import external
 
 class ExternalHarmonic(external.External):
     
-    def __init__(self,geom,k,r0):
-        if 'distance' not in dir(geom):
+    def __init__(self,mc,k,r0):
+        if 'distance' not in dir(mc.geom):
             raise ValueError('geom must implement a distance function')
-        self.geom = geom
+        super().__init__(mc)
         if k <= 0.0:
             raise ValueError('k must be greater than zero.')
         self.k = k

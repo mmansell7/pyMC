@@ -12,17 +12,17 @@ import geometry_cartesian_box
 
 class ExternalWall(external.External):
     
-    def __init__(self,geom,which_walls):
-        if not isinstance(geom,geometry_cartesian_box.CartesianBox):
+    def __init__(self,mc,which_walls):
+        super().__init__(mc)
+        if not isinstance(self.geom,geometry_cartesian_box.CartesianBox):
             raise ValueError('geometry for external_wall must be of class ' +
                              'CartesianBox')
-        if geom.ndim == 2:
+        if self.geom.ndim == 2:
             wall_strs = np.array([['xlo','ylo'],['xhi','yhi']])
-        elif geom.ndim == 3:
+        elif self.geom.ndim == 3:
             wall_strs = np.array([['xlo','ylo','zlo'],['xhi','yhi','zhi']])
         else:
             raise ValueError('external_wall is implemented only for 2 and 3 dimensions')
-        self.geom = geom
         
         if not np.all(np.isin(which_walls,wall_strs)):
             raise ValueError('which_walls must be one of ' + ','.join(wall_strs.flatten()))

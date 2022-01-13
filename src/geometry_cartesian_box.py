@@ -36,7 +36,8 @@ class CartesianBox(geometry.Geometry):
         
     '''
     
-    def __init__(self,x,bcs):
+    def __init__(self,mc,x,bcs):
+        super().__init__(mc)
         if not x.ndim == 2:
             raise ValueError('x must be a two-dimensional array. ' +
                              'Example: x = [[0,0,0],[1,1,1]] indicates a ' +

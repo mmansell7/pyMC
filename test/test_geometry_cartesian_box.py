@@ -11,6 +11,8 @@ import numpy as np
 
 import sys
 sys.path.append('../src')
+
+import sim
 import geometry_cartesian_box
 
 
@@ -18,9 +20,10 @@ import geometry_cartesian_box
 class TestCartesianBox():
     
     def test_create1(self):
+        mc = sim.Sim()
         x = np.array([[-1,-2,-3],[1,2,3]],dtype=float)
         bcs = np.array(['fixed','periodic','fixed'])
-        g = geometry_cartesian_box.CartesianBox(x,bcs)
+        g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         assert np.all(g.L == np.array([2,4,6],dtype=float))
         assert np.all(~(g.L == np.array([1.999999,3.999999,5.999999],dtype=float)))
         assert np.all(~(g.L == np.array([2.000001,4.000001,6.000001],dtype=float)))
@@ -31,9 +34,10 @@ class TestCartesianBox():
         return
     
     def test_create2(self):
+        mc = sim.Sim()
         x = np.array([[-11.1,-22.2,-33.3],[12.3,45.6,78.9]],dtype=float)
         bcs = np.array(['fixed','periodic','periodic'])
-        g = geometry_cartesian_box.CartesianBox(x,bcs)
+        g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         assert np.all(~(g.L == np.array([23.399999,67.799999,112.199999],dtype=float)))
         assert np.all(~(g.L == np.array([23.400001,67.800001,112.200001],dtype=float)))
         assert np.all(g.L == np.array([23.4,67.8,112.2],dtype=float))
@@ -44,23 +48,26 @@ class TestCartesianBox():
         return
         
     def test_create_inverted_x(self):
+        mc = sim.Sim()
         x = np.array([[1,-2,-3],[-1,2,3]],dtype=float)
         bcs = np.array(['fixed','periodic','fixed'])
         with pytest.raises(ValueError) as excinfo:
-            g = geometry_cartesian_box.CartesianBox(x,bcs)
+            g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         return
         
     def test_create_invalid_bcs(self):
+        mc = sim.Sim()
         x = np.array([[-1,-2,-3],[1,2,3]],dtype=float)
         bcs = np.array(['fixedi','periodic','fixed'])
         with pytest.raises(ValueError) as excinfo:
-            g = geometry_cartesian_box.CartesianBox(x,bcs)
+            g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         return
     
     def test_distance_1(self):
+        mc = sim.Sim()
         x = np.array([[-1,-2,-3],[1,2,3]],dtype=float)
         bcs = np.array(['fixed','periodic','fixed'])
-        g = geometry_cartesian_box.CartesianBox(x,bcs)
+        g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         r1 = np.array([-0.1,-0.2,-0.3])
         r2 = np.array([0.1,0.2,0.3])
         dist,dr2,dr = g.distance(r1,r2)
@@ -73,9 +80,10 @@ class TestCartesianBox():
         return
     
     def test_distance_2(self):
+        mc = sim.Sim()
         x = np.array([[-1,-2,-3],[1,2,3]],dtype=float)
         bcs = np.array(['fixed','periodic','fixed'])
-        g = geometry_cartesian_box.CartesianBox(x,bcs)
+        g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         r1 = np.array([0.1,0.2,0.3])
         r2 = np.array([-0.1,-0.2,-0.3])
         dist,dr2,dr = g.distance(r1,r2)
@@ -88,9 +96,10 @@ class TestCartesianBox():
         return
     
     def test_distance_3(self):
+        mc = sim.Sim()
         x = np.array([[-10,-10,-10],[10,10,10]],dtype=float)
         bcs = np.array(['fixed','fixed','fixed'])
-        g = geometry_cartesian_box.CartesianBox(x,bcs)
+        g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         r1 = np.array([-9.0,-9.0,-9.0])
         r2 = np.array([9.0,9.0,9.0])
         dist,dr2,dr = g.distance(r1,r2)
@@ -103,9 +112,10 @@ class TestCartesianBox():
         return
     
     def test_distance_4x(self):
+        mc = sim.Sim()
         x = np.array([[-10,-10,-10],[10,10,10]],dtype=float)
         bcs = np.array(['periodic','fixed','fixed'])
-        g = geometry_cartesian_box.CartesianBox(x,bcs)
+        g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         r1 = np.array([-9.0,-9.0,-9.0])
         r2 = np.array([9.0,9.0,9.0])
         dist,dr2,dr = g.distance(r1,r2)
@@ -118,9 +128,10 @@ class TestCartesianBox():
         return
     
     def test_distance_4y(self):
+        mc = sim.Sim()
         x = np.array([[-10,-10,-10],[10,10,10]],dtype=float)
         bcs = np.array(['fixed','periodic','fixed'])
-        g = geometry_cartesian_box.CartesianBox(x,bcs)
+        g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         r1 = np.array([-9.0,-9.0,-9.0])
         r2 = np.array([9.0,9.0,9.0])
         dist,dr2,dr = g.distance(r1,r2)
@@ -133,9 +144,10 @@ class TestCartesianBox():
         return
     
     def test_distance_4z(self):
+        mc = sim.Sim()
         x = np.array([[-10,-10,-10],[10,10,10]],dtype=float)
         bcs = np.array(['fixed','fixed','periodic'])
-        g = geometry_cartesian_box.CartesianBox(x,bcs)
+        g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         r1 = np.array([-9.0,-9.0,-9.0])
         r2 = np.array([ 9.0, 9.0, 9.0])
         dist,dr2,dr = g.distance(r1,r2)
@@ -148,9 +160,10 @@ class TestCartesianBox():
         return
     
     def test_distance_4all(self):
+        mc = sim.Sim()
         x = np.array([[-10,-10,-10],[10,10,10]],dtype=float)
         bcs = np.array(['periodic','periodic','periodic'])
-        g = geometry_cartesian_box.CartesianBox(x,bcs)
+        g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         r1 = np.array([-9.0,-9.0,-9.0])
         r2 = np.array([ 9.0, 9.0, 9.0])
         dist,dr2,dr = g.distance(r1,r2)
@@ -163,9 +176,10 @@ class TestCartesianBox():
         return
     
     def test_distance_4allinverse(self):
+        mc = sim.Sim()
         x = np.array([[-10,-10,-10],[10,10,10]],dtype=float)
         bcs = np.array(['periodic','periodic','periodic'])
-        g = geometry_cartesian_box.CartesianBox(x,bcs)
+        g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         r1 = np.array([ 9.0, 9.0, 9.0])
         r2 = np.array([-9.0,-9.0,-9.0])
         dist,dr2,dr = g.distance(r1,r2)
@@ -178,9 +192,10 @@ class TestCartesianBox():
         return
     
     def test_distance_5(self):
+        mc = sim.Sim()
         x = np.array([[-10,-10,-10],[10,10,10]],dtype=float)
         bcs = np.array(['fixed','fixed','fixed'])
-        g = geometry_cartesian_box.CartesianBox(x,bcs)
+        g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         r1 = np.array([-20.0,30.0,-40.0])
         r2 = np.array([ 20.0,20.0, 20.0])
         dist,dr2,dr = g.distance(r1,r2)
@@ -195,9 +210,10 @@ class TestCartesianBox():
     ##############################################################
     
     def test_wrap_position_1(self):
+        mc = sim.Sim()
         x = np.array([[-10,-10,-10],[10,10,10]],dtype=float)
         bcs = np.array(['fixed','fixed','fixed'])
-        g = geometry_cartesian_box.CartesianBox(x,bcs)
+        g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         r1 = np.array([0.0,0.0,0.0])
         im1 = np.array([0,0,0],dtype=int)
         r2,im2 = g.wrap_position(r1,im1)
@@ -208,9 +224,10 @@ class TestCartesianBox():
         return
     
     def test_wrap_position_2(self):
+        mc = sim.Sim()
         x = np.array([[-10,-10,-10],[10,10,10]],dtype=float)
         bcs = np.array(['fixed','fixed','fixed'])
-        g = geometry_cartesian_box.CartesianBox(x,bcs)
+        g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         r1 = np.array([-100.0,100.0,1000.0])
         im1 = np.array([1,2,3],dtype=int)
         r2,im2 = g.wrap_position(r1,im1)
@@ -221,9 +238,10 @@ class TestCartesianBox():
         return
     
     def test_wrap_position_edge_low(self):
+        mc = sim.Sim()
         x = np.array([[-10,-10,-10],[10,10,10]],dtype=float)
         bcs = np.array(['periodic','periodic','periodic'])
-        g = geometry_cartesian_box.CartesianBox(x,bcs)
+        g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         r1 = np.array([-10.0,-10.0,-10.0])
         im1 = np.array([10,10,10],dtype=int)
         r2,im2 = g.wrap_position(r1,im1)
@@ -234,9 +252,10 @@ class TestCartesianBox():
         return
     
     def test_wrap_position_edge_high(self):
+        mc = sim.Sim()
         x = np.array([[-10,-10,-10],[10,10,10]],dtype=float)
         bcs = np.array(['periodic','periodic','periodic'])
-        g = geometry_cartesian_box.CartesianBox(x,bcs)
+        g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         r1 = np.array([10.0000000,10.000000,10.000000])
         im1 = np.array([10,10,10],dtype=int)
         r2,im2 = g.wrap_position(r1,im1)
@@ -247,9 +266,10 @@ class TestCartesianBox():
         return
     
     def test_wrap_position_3(self):
+        mc = sim.Sim()
         x = np.array([[-10,-10,-10],[10,10,10]],dtype=float)
         bcs = np.array(['periodic','fixed','periodic'])
-        g = geometry_cartesian_box.CartesianBox(x,bcs)
+        g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         r1 = np.array([-90.1,90.1,89.9])
         im1 = np.array([0,0,0],dtype=int)
         r2,im2 = g.wrap_position(r1,im1)

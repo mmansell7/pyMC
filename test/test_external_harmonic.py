@@ -11,6 +11,8 @@ import numpy as np
 
 import sys
 sys.path.append('../src')
+
+import sim
 import geometry_cartesian_box
 import external_harmonic
 
@@ -20,41 +22,45 @@ import external_harmonic
 class TestExternalHarmonic():
     
     def test_create1(self):
+        mc = sim.Sim()
         x = np.array([[-11.1,-22.2,-33.3],[12.3,45.6,78.9]],dtype=float)
         bcs = np.array(['fixed','fixed','fixed'])
-        g = geometry_cartesian_box.CartesianBox(x,bcs)
+        g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         
         k  = 1.1
         r0 = np.array([0.0,1.0,2.0])
-        p  = external_harmonic.ExternalHarmonic(g,k,r0)
+        p  = external_harmonic.ExternalHarmonic(mc,k,r0)
         assert p.k == 1.1
         assert np.all(p.r0 == np.array([0.0,1.0,2.0]))
         return
     
     def test_create_fail1(self):
-        g = np.empty(3)
+        mc = sim.Sim()
+        mc.geom = np.empty(3)
         
         k  = 1.1
         r0 = np.array([0.0,1.0,2.0])
         with pytest.raises(ValueError) as excinfo:
-            p  = external_harmonic.ExternalHarmonic(g,k,r0)
+            p  = external_harmonic.ExternalHarmonic(mc,k,r0)
         return
     
     def test_create_fail2(self):
+        mc = sim.Sim()
         x = np.array([[-11.1,-22.2,-33.3],[12.3,45.6,78.9]],dtype=float)
         bcs = np.array(['fixed','fixed','fixed'])
-        g = geometry_cartesian_box.CartesianBox(x,bcs)
+        g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         
         k  = 1.1
         r0 = np.array([0.0,1.0])
         with pytest.raises(ValueError) as excinfo:
-            p  = external_harmonic.ExternalHarmonic(g,k,r0)
+            p  = external_harmonic.ExternalHarmonic(mc,k,r0)
         return
     
     def test_phi(self):
+        mc = sim.Sim()
         x = np.array([[-11.1,-22.2,-33.3],[12.3,45.6,78.9]],dtype=float)
         bcs = np.array(['fixed','fixed','fixed'])
-        g = geometry_cartesian_box.CartesianBox(x,bcs)
+        g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         
         k_ar = np.array([1.00,1.00,1.00,1.00,1.00,1.00,1.00,1.00,1.00,1.00,1.00,1.00,1.00,1.00,4.70,4.70,4.70,4.70,4.70,4.70,4.70,4.70,4.70,4.70])
         
@@ -122,7 +128,7 @@ class TestExternalHarmonic():
             
         phi_ar = np.empty(phi_check_ar.shape)
         for ii in range(0,phi_check_ar.shape[0]):
-            p  = external_harmonic.ExternalHarmonic(g,k_ar[ii],r0_ar[ii])
+            p  = external_harmonic.ExternalHarmonic(mc,k_ar[ii],r0_ar[ii])
             rr = r_ar[ii]
             phi_tmp = p.phi(r_ar[ii])
             phi_ar[ii,0]  = phi_tmp[0]
@@ -137,7 +143,7 @@ class TestExternalHarmonic():
                                [1.0,  np.nan,0.0,np.nan,  1.0,1.0,1.0,   0.5,  0.0,-1.0,0.0],
                                [1.0,  0.0,np.nan,np.nan,  1.0,1.0,1.0,   0.5,  -1.0,0.0,0.0]])
         for t in test_array:
-            p = external_harmonic.ExternalHarmonic(g,t[0],t[1:4])
+            p = external_harmonic.ExternalHarmonic(mc,t[0],t[1:4])
             phi_tmp = p.phi(t[4:7])
             assert np.abs(phi_tmp[0] - t[7]) < 1.0E-7
             assert np.all(np.abs(phi_tmp[1] - t[8:]) < 1.0E-7)

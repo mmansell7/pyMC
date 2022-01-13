@@ -8,18 +8,18 @@ Created on Fri Oct  8 17:13:33 2021
 
 import numpy as np
 
+import pointers
 import neighbor
 
-class Integrator():
+class Integrator(pointers.Pointers):
     
-    def __init__(self,at,seed,trials,probs):
-        self.rng = np.random.default_rng(seed=seed)
-        self.at = at
-        self.neigh = None
-        self.trials = trials
-        self.probs = probs
+    def __init__(self,mc,seed):
+        super().__init__(mc)
+        self.mc.grat = self
+        self.trials = []
+        self.probs = []
         self.stepnum = 0
-        pass
+        self.rng = np.random.default_rng(seed=seed)
     
     @property
     def trials(self):
@@ -32,6 +32,13 @@ class Integrator():
         self.__trials = vals
         return
     
+    def add_trial(self,tr,prob):
+        if tr in self.trials:
+            raise ValueError('Cannot add the same trial twice.')
+        self.trials.append(tr)
+        self.probs.append(prob)
+        
+    
     def step(self):
         # raise NotImplementedError('Child classes of Integrator must ' +
         #             'implement')
@@ -40,13 +47,11 @@ class Integrator():
         self.stepnum += 1
         return
 
-
 class IntegratorMC_mu_geom_T_1(Integrator):
     
-    def __init__(self,at,mu,geom,T,max_move,seed):
-        super().__init__(at,seed)
+    def __init__(self,mc,mu,T,max_move,seed):
+        super().__init__(mc,seed)
         self.mu = mu
-        self.geom = geom
         self.T = T
         self.max_move = max_move
         
@@ -172,8 +177,8 @@ class IntegratorMC_mu_geom_T_1(Integrator):
             f_pair1[k]  = -dr1*f
             
         total_energy_change = ( en_external1 + np.sum(en_pair1) )
-        SOMETHING_ELSE
-        bf = function of total_energy_change and SOMETHING_ELSE
+        # SOMETHING_ELSE
+        bf = np.nan  # function of total_energy_change and SOMETHING_ELSE
         if bf <= 0.0:
             accept = True
         else:
@@ -223,8 +228,8 @@ class IntegratorMC_mu_geom_T_1(Integrator):
             f_pair0[k]  = -dr0*f
             
         total_energy_change = ( - en_external0 - np.sum(en_pair0) )
-        SOMETHING_ELSE
-        bf = function of total_energy_change and SOMETHING_ELSE
+        # SOMETHING_ELSE
+        bf = np.nan #function of total_energy_change and SOMETHING_ELSE
         if bf <= 0.0:
             accept = True
         else:
@@ -239,7 +244,7 @@ class IntegratorMC_mu_geom_T_1(Integrator):
             self.last_accept = False
         elif accept == True:
             self.last_accept = True
-            self.at.add_atom(self,x1,im=im1,atype=itype)
+            self.at.add_atom(self,x0,im=im0,atype=itype)
             
         else:
             raise ValueError('Unrecognized value of \'accept\'.')

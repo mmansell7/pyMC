@@ -8,10 +8,14 @@ Created on Wed Sep 22 12:39:45 2021
 
 import numpy as np
 
-class Geometry:
+import pointers
+
+class Geometry(pointers.Pointers):
     
-    def __init__(self):
-        pass
+    def __init__(self,mc):
+        super().__init__(mc)
+        self.mc.geom = self
+        return
     
     def distance(self,r1,r2):
         pass

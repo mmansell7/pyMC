@@ -8,12 +8,14 @@ Created on Thu Oct  7 20:59:16 2021
 
 
 import numpy as np
+
+import pointers
 import geometry
 import force
 
 
 
-class Atom():
+class Atom(pointers.Pointers):
     '''
     
     
@@ -60,14 +62,12 @@ class Atom():
     '''
     grow_fact = 1.5
     
-    def __init__(self,geom,nmax):
-        if not isinstance(geom,geometry.Geometry):
-            raise ValueError()
-        self.geom = geom
+    def __init__(self,mc,nmax):
+        super().__init__(mc)
+        self.mc.at = self
         if nmax < 1:
             raise ValueError()
         self.nmax = nmax
-        self.force = None
         self.n = 0
         self.x = np.empty((self.nmax,self.geom.ndim),dtype=float)
         self.f = self.x.copy()
@@ -96,7 +96,8 @@ class Atom():
                 
             if (f is None) or (en_external is None) or (en_pair is None) or (
                     en_total is None):
-                if self.force is not None: self.force.update_some(np.array([self.n-1]))
+                if hasattr(self,'force') and self.force is not None:
+                    self.force.update_some(np.array([self.n-1]))
             else:
                 raise NotImplementedError('The current implementation on this ' +
                             'execution branch would fail to update particles ' +
@@ -171,7 +172,8 @@ class Atom():
         
         if (f is None) or (en_external is None) or (en_pair is None) or (
                     en_total is None):
-                if self.force is not None: self.force.update_some(np.array([ind]))
+                if hasattr(self,'force') and self.force is not None:
+                    self.force.update_some(np.array([ind]))
         else:
             raise NotImplementedError('The current implementation of ' +
                     'translate_atom with f,en_external,en_pair, or en_total ' +

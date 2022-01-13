@@ -8,11 +8,12 @@ Created on Thu Dec 30 21:24:09 2021
 
 import numpy as np
 
-class Trial():
+import pointers
+
+class Trial(pointers.Pointers):
     
     def __init__(self,mc):
-        self.mc = mc
-        self.grat = None
+        super().__init__(mc)
         
     def execute(self):
         raise NotImplementedError('Child classes of Trial must override ' +
@@ -32,34 +33,20 @@ class Trial_Translation(Trial):
     
     @itype.setter
     def itype(self,val):
-        if val not in self.mc.at.atype:
-            raise ValueError('There must be at least one atom of type itype.')
+        # It would be useful to verify atom type is valid, but right now, this
+        #   lines below prevent the creation of trials and integrators.
+        # if val not in self.mc.at.atype:
+        #     raise ValueError('There must be at least one atom of type itype.')
         self.__itype = val
         return
     
     @property
     def ext(self):
-        return self.mc.at.external_type[self.itype]
+        return self.at.external_type[self.itype]
     
     @property
     def rng(self):
-        return self.mc.rng
-    
-    @property
-    def geom(self):
-        return self.mc.geom
-    
-    @property
-    def neigh(self):
-        return self.mc.neigh
-    
-    @property
-    def at(self):
-        return self.mc.at
-    
-    @property
-    def force(self):
-        return self.mc.force
+        return self.grat.rng
     
     @property
     def kB(self):
@@ -143,8 +130,26 @@ class Trial_Translation(Trial):
         else:
             raise ValueError('Unrecognized value of \'accept\'.')
             
-        return self.last_accept
+        return self.grat.last_accept
     
 
-def Trial_Exchange(Trial):
+class Trial_Exchange(Trial):
+    
+    def __init__(self,mc,itype):
+        super().__init__(mc)
+        self.itype = itype
+        
+    @property
+    def itype(self):
+        return self.__itype
+    
+    @itype.setter
+    def itype(self,val):
+        if val not in self.mc.at.atype:
+            raise ValueError('There must be at least one atom of type itype.')
+        self.__itype = val
+        return
+    
+    
+    
     

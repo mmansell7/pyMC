@@ -11,7 +11,6 @@ import numpy as np
 
 import atom_listener
 
-
 class Neighbor(atom_listener.AtomListener):
     '''
     Abstract base class.
@@ -50,13 +49,14 @@ class Neighbor(atom_listener.AtomListener):
     
     minus_one = np.array([-1],dtype='uint32')[0]
     
-    def __init__(self,mc,at,cutoff):
-        super().__init__(at)
-        self.cutoff = cutoff
-        self.at.primary_neigh = self
-        self.mc = mc
+    def __init__(self,mc,cutoff):
+        super().__init__(mc)
+        print('neighbor: self.mc: {}'.format(self.mc))
         self.mc.neigh = self
-        self.last_build = None
+        self.at.primary_neigh = self
+        self.at.neighbors = [self]
+        self.cutoff = cutoff
+        self.last_build = -1
         self.nmax = None
         self.l = None
         return
@@ -106,7 +106,6 @@ class Neighbor(atom_listener.AtomListener):
         return
 
 
-
 class NeighborClass0(Neighbor):
     '''
     Calculates distance between every pair on every build.
@@ -124,7 +123,7 @@ class NeighborClass0(Neighbor):
     
     '''
     
-    def __init__(self,mc,at,geom,nmax,cutoff):
+    def __init__(self,mc,nmax,cutoff):
         '''
         
         Parameters
@@ -140,10 +139,7 @@ class NeighborClass0(Neighbor):
             Maximum number of neighbors for any atom
         
         '''
-        self.geom = geom
-        super().__init__(mc,at,cutoff)
-        self.at.neighbors = [self]
-        self.last_build = -1
+        super().__init__(mc,cutoff)
         
         if nmax < 0:
             raise ValueError
@@ -177,7 +173,7 @@ class NeighborClass0(Neighbor):
         self.nn[self.at.n:] = -1
         print(self.nn)
         warnflag = 0
-        if (self.mc.stepnum > self.last_build) or kwargs.get('force',False):
+        if (self.grat.stepnum > self.last_build) or kwargs.get('force',False):
             for i in range(0,self.at.n-1):
                 for j in range(i+1,self.at.n):
                     d,dsq,_ = self.geom.distance(self.at.x[i],self.at.x[j])
@@ -196,7 +192,7 @@ class NeighborClass0(Neighbor):
                 warnings.warn(('There were {} instances of attempts to add ' +
                               'neighbors beyond the set maximum neighbor number.\n' +
                               ' Those neighbors will be neglected.').format(warnflag))
-            self.last_build = self.mc.stepnum
+            self.last_build = self.grat.stepnum
         
         return
     
@@ -350,7 +346,7 @@ class NeighborClassMC(Neighbor):
     '''
     
     
-    def __init__(self,mc,at,geom,nmax,cell_corners,cutoff):
+    def __init__(self,mc,nmax,cell_corners,cutoff):
         '''
         Instantiate an instance of NeighborClassMC.
         
@@ -375,16 +371,7 @@ class NeighborClassMC(Neighbor):
         None.
 
         '''
-        self.geom = geom
-        super().__init__(mc,at,cutoff)
-        self.at.neighbors = [self]
-        self.last_build = -1
-        # self.distance = np.empty((self.at.nmax,self.nmax),dtype=float)
-        # self.distance.fill(np.nan)
-        # self.dist_sq  = np.empty((self.at.nmax,self.nmax),dtype=float)
-        # self.dist_sq.fill(np.nan)
-        # self.displ    = np.empty((self.at.nmax,self.nmax,self.geom.ndim),dtype=float)
-        # self.displ.fill(np.nan)
+        super().__init__(mc,cutoff)
         
         if nmax < 0:
             raise ValueError
@@ -475,7 +462,7 @@ class NeighborClassMC(Neighbor):
         # Build pairs list
         # print('Building pair list...')
         # print(kwargs.get('force',False))
-        if (self.mc.stepnum > self.last_build) or kwargs.get('force',False):
+        if (self.grat.stepnum > self.last_build) or kwargs.get('force',False):
             self.l.fill(self.minus_one)
             self.nn[:self.at.n] = 0
             warnflag = 0

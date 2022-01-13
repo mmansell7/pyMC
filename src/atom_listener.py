@@ -6,16 +6,15 @@ Created on Mon Oct 25 16:55:49 2021
 @author: MattMansell
 """
 
+import pointers
 import atom
 
-class AtomListener():
+class AtomListener(pointers.Pointers):
     
-    def __init__(self,at):
+    def __init__(self,mc):
         '''
         '''
-        if not isinstance(at,atom.Atom):
-            raise ValueError
-        self.at   = at
+        super().__init__(mc)
         self.at.listeners.append(self)
         
         return
