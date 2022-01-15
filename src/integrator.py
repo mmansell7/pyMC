@@ -16,7 +16,7 @@ class Integrator(pointers.Pointers):
     def __init__(self,mc,seed):
         super().__init__(mc)
         self.mc.grat = self
-        self.trials = []
+        self.__trials = []
         self.probs = []
         self.stepnum = 0
         self.rng = np.random.default_rng(seed=seed)
@@ -25,27 +25,19 @@ class Integrator(pointers.Pointers):
     def trials(self):
         return self.__trials
     
-    @trials.setter
-    def trials(self,vals):
-        for tr in vals:
-            tr.grat = self
-        self.__trials = vals
-        return
-    
     def add_trial(self,tr,prob):
         if tr in self.trials:
             raise ValueError('Cannot add the same trial twice.')
         self.trials.append(tr)
         self.probs.append(prob)
         
-    
     def step(self):
         # raise NotImplementedError('Child classes of Integrator must ' +
         #             'implement')
         tr = self.rng.choice(self.trials,p=self.probs)
-        tr.execute()
+        out = tr.execute()
         self.stepnum += 1
-        return
+        return out
 
 class IntegratorMC_mu_geom_T_1(Integrator):
     
