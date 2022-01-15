@@ -27,12 +27,16 @@ class Neighbor(atom_listener.AtomListener):
     minus_one [class attribute]: 
         Unsigned long representation of -1.  Used to indicate invalid values of
         integer variables.
-    nmax : int
+    max_neigh : int
         Maximum number of neighbors for any particle in the list
     l : numpy array (2D)
         List of neighbor pairs. First index is the index of the "i" particle.
         l[i] is then an array of the indexes of i's neighbors. If l[i][q] = 
     cutoff : 
+        
+    displ : array
+        Displacement array since last build.
+    n : 
     
     Methods
     -------
@@ -57,10 +61,59 @@ class Neighbor(atom_listener.AtomListener):
         self.at.neighbors = [self]
         self.cutoff = cutoff
         self.last_build = -1
-        self.nmax = None
         self.l = None
+        self.nn = None
+        self.how_far = None
         return
     
+    @property
+    def nmax(self):
+        nmaxs = np.array([self.l.shape[0],self.nn.shape[0]])
+        test = nmaxs - nmaxs[0]
+        if np.any(test != 0):
+            raise Exception('Inconsistent lengths of Neighbor class\'s internal ' +
+                            'arrays.')
+        elif nmaxs[0] != self.at.nmax:
+            raise Exception('Neighbor object\'s internal array length ' +
+                            'does not match Atom object\'s.')
+        else:
+            return nmaxs[0]
+    
+    @property
+    def n(self):
+        a = np.where(np.any(self.l != Neighbor.minus_one,axis=1))[0]
+        a = a[-1]+1 if a.shape[0] > 0 else 0
+        b = np.where(self.nn==np.uint8(-1))[0]
+        b = b[0] if b.shape[0] > 0 else self.nn.shape[0]
+        if b < a:
+            raise Exception('Inconsistent n deduced from Neighbor class\'s ' +
+                            'internal arrays.')
+        elif b != self.at.n:
+            print('self.l: {}'.format(self.l))
+            print('self.nn: {}'.format(self.nn))
+            print('a,b: {},{}'.format(a,b))
+            raise Exception(('Neighbor object\'s value of n ({}) does not match ' +
+                            'Atom object\'s ({}).').format(b,self.at.n))
+        else:
+            return b
+    
+    @property
+    def max_neigh(self):
+        b = np.max(np.where(self.nn != np.uint8(-1),self.nn,-1))
+        print('b: {}'.format(b))
+        if self.l.shape[1] >= b:
+            return self.l.shape[1]
+        else:
+            raise Exception(('Inconsistent max_neigh. self.l.shape = {} ' +
+                             'and self.nn = {}.').format(self.l.shape,self.nn))
+        
+    @property
+    def skin_dist(self):
+        if self.at.pair_type.values():
+            return self.cutoff - np.max([p.rc for p in self.at.pair_type.values()])
+        else:
+            return 100.0
+        
     def build(self):
         '''
         (Re-)build the neighbor list.
@@ -123,7 +176,7 @@ class NeighborClass0(Neighbor):
     
     '''
     
-    def __init__(self,mc,nmax,cutoff):
+    def __init__(self,mc,max_neigh,cutoff):
         '''
         
         Parameters
@@ -135,18 +188,18 @@ class NeighborClass0(Neighbor):
             Instance of class Atom to which this object will be associated.
         geom :
             Instance of class Geometry to which this object will be associated.
-        nmax : int
+        max_neigh : int
             Maximum number of neighbors for any atom
         
         '''
         super().__init__(mc,cutoff)
         
-        if nmax < 0:
+        if max_neigh < 0:
             raise ValueError
-        self.nmax = nmax
-        self.l    = np.empty((self.at.nmax,self.nmax),dtype='uint32')
-        print(self.at.nmax,self.nmax,self.l.shape)
+        self.l    = np.empty((self.at.nmax,max_neigh),dtype='uint32')
+        print(self.at.nmax,max_neigh,self.l.shape)
         self.nn   = np.zeros(self.at.nmax,dtype='uint8')
+        self.displ = np.zeros((self.at.nmax,self.geom.ndim),dtype='float')
         
         return
     
@@ -178,16 +231,17 @@ class NeighborClass0(Neighbor):
                 for j in range(i+1,self.at.n):
                     d,dsq,_ = self.geom.distance(self.at.x[i],self.at.x[j])
                     if d < self.cutoff:
-                        if self.nn[i] >= self.nmax:
+                        if self.nn[i] >= self.max_neigh:
                             warnflag += 1
                         else:
                             self.l[i,self.nn[i]] = j
                             self.nn[i] += 1
-                        if self.nn[j] >= self.nmax:
+                        if self.nn[j] >= self.max_neigh:
                             warnflag += 1
                         else:
                             self.l[j,self.nn[j]] = i
                             self.nn[j] += 1
+            self.displ[:] = 0.0
             if warnflag:
                 warnings.warn(('There were {} instances of attempts to add ' +
                               'neighbors beyond the set maximum neighbor number.\n' +
@@ -219,11 +273,14 @@ class NeighborClass0(Neighbor):
             Neighbor list for (virtual) particle.
         
         '''
+        raise NotImplementedError('This function may be necessary in the ' +
+                                  'future, but has been declared "not ' +
+                                  'implemented" for now.')
         
         if (x is None):
             x = self.at.x[ind]
             
-        l = np.empty((self.nmax),dtype='uint32')
+        l = np.empty((self.max_neigh),dtype='uint32')
         l.fill(self.minus_one)
         
         other_atoms = list(range(0,self.n))
@@ -234,7 +291,7 @@ class NeighborClass0(Neighbor):
         for j in other_atoms:
             d,dsq,_ = self.geom.distance(x,self.at.x[j])
             if d < self.cutoff:
-                if nn >= self.nmax:
+                if nn >= self.max_neigh:
                     warnflag += 1
                 else:
                     l[nn] = j
@@ -246,11 +303,13 @@ class NeighborClass0(Neighbor):
         return l
     
     def grow(self,nmax):
-        new_rows = nmax - self.l.shape[0]
-        self.l = np.append(self.l,np.empty((new_rows,self.nmax),
+        new_rows = nmax - self.nmax
+        self.l = np.append(self.l,np.empty((new_rows,self.max_neigh),
                                                dtype=self.l.dtype),axis=0)
         self.nn = np.append(self.nn,np.empty((new_rows),dtype=self.nn.dtype),axis=0)
-        self.nmax = nmax
+        self.displ = np.append(self.displ,
+                               np.empty((new_rows,self.displ.shape[1]),
+                                          dtype=self.displ.dtype),axis=0)
         return
     
     def atom_added(self):
@@ -262,12 +321,12 @@ class NeighborClass0(Neighbor):
             atype   = self.at.pair_type[self.at.atype[i],self.at.atype[j]]
             d,dsq,_ = self.geom.distance(self.at.x[i],self.at.x[j])
             if d < (1.5*atype.rc):
-                if self.nn[i] >= self.nmax:
+                if self.nn[i] >= self.max_neigh:
                     warnflag += 1
                 else:
                     self.l[i,self.nn[i]] = j
                     self.nn[i] += 1
-                if self.nn[j] >= self.nmax:
+                if self.nn[j] >= self.max_neigh:
                     warnflag += 1
                 else:
                     self.l[j,self.nn[j]] = i
@@ -346,7 +405,7 @@ class NeighborClassMC(Neighbor):
     '''
     
     
-    def __init__(self,mc,nmax,cell_corners,cutoff):
+    def __init__(self,mc,max_neigh,cell_corners,cutoff):
         '''
         Instantiate an instance of NeighborClassMC.
         
@@ -358,7 +417,7 @@ class NeighborClassMC(Neighbor):
             DESCRIPTION.
         geom : TYPE
             DESCRIPTION.
-        nmax : int (> 0)
+        max_neigh : int (> 0)
             maximum number of neighbors for any atom.
 
         Raises
@@ -373,12 +432,12 @@ class NeighborClassMC(Neighbor):
         '''
         super().__init__(mc,cutoff)
         
-        if nmax < 0:
+        if max_neigh < 0:
             raise ValueError
-        self.nmax = nmax
-        self.l    = np.empty((self.at.nmax,self.nmax),dtype='uint32')
-        print(self.at.nmax,self.nmax,self.l.shape)
+        self.l    = np.empty((self.at.nmax,max_neigh),dtype='uint32')
+        print(self.at.nmax,max_neigh,self.l.shape)
         self.nn   = np.zeros(self.at.nmax,dtype='uint8')
+        self.displ = np.zeros((self.at.nmax,self.geom.ndim),dtype='float')
         self.nn.fill(-1)
         self.cell_list = np.empty((self.at.nmax,),dtype=int)
         self.cell_list.fill(-1)
@@ -425,6 +484,58 @@ class NeighborClassMC(Neighbor):
         
         return
     
+    @property
+    def nmax(self):
+        nmaxs = np.array([self.l.shape[0],self.nn.shape[0],self.cell_list.shape[0]])
+        test = nmaxs - nmaxs[0]
+        if np.any(test != 0):
+            raise Exception('Inconsistent lengths of Neighbor class\'s internal ' +
+                            'arrays.')
+        elif nmaxs[0] != self.at.nmax:
+            raise Exception('Neighbor object\'s internal array length ' +
+                            'does not match Atom object\'s.')
+        else:
+            return nmaxs[0]
+    
+    @property
+    def n(self):
+        a = np.where(np.any(self.l != Neighbor.minus_one,axis=1))[0]
+        a = a[-1]+1 if a.shape[0] > 0 else 0
+        b = np.where(self.nn==np.uint8(-1))[0]
+        b = b[0] if b.shape[0] > 0 else self.nn.shape[0]
+        c = np.where(self.cell_list < 0)[0]
+        c = c[0] if c.shape[0] > 0 else self.cell_list.shape[0]
+        if (b != c) or (b < a):
+            raise Exception('Inconsistent n deduced from Neighbor class\'s ' +
+                            'internal arrays.')
+        elif b != self.at.n:
+            print('self.l: {}'.format(self.l))
+            print('self.nn: {}'.format(self.nn))
+            print('a,b: {},{}'.format(a,b))
+            raise Exception(('Neighbor object\'s value of n ({}) does not match ' +
+                            'Atom object\'s ({}).').format(b,self.at.n))
+        else:
+            return b
+    
+    def grow(self,nmax):
+        nm = self.l.shape[0]
+        new_rows = nmax - nm
+        self.l = np.append(self.l,np.empty((new_rows,self.max_neigh),
+                                               dtype=self.l.dtype),axis=0)
+        self.l[nm:] = -1
+        self.nn = np.append(self.nn,np.empty((new_rows),dtype=self.nn.dtype),axis=0)
+        self.nn[nm:] = -1
+        self.displ = np.append(self.displ,
+                               np.empty((new_rows,self.displ.shape[1]),
+                                          dtype=self.displ.dtype),axis=0)
+        self.displ[nm:] = np.nan
+        self.cell_list = np.append(self.cell_list,
+                                   np.empty((new_rows),
+                                            dtype=self.cell_list.dtype),axis=0)
+        self.cell_list[nm:] = -1
+        return
+    
+    
     def build(self,**kwargs):
         '''
         Complete (re)build of the lists.
@@ -465,6 +576,7 @@ class NeighborClassMC(Neighbor):
         if (self.grat.stepnum > self.last_build) or kwargs.get('force',False):
             self.l.fill(self.minus_one)
             self.nn[:self.at.n] = 0
+            self.displ[:self.at.n] = 0.0
             warnflag = 0
             # for i in range(0,self.at.nmax):
                 # print('ind,cellind = {},{}'.format(i,self.cell_list[i]))
@@ -483,12 +595,12 @@ class NeighborClassMC(Neighbor):
                     if d <= (self.cutoff):
                         # print(('Particles {} (at {}) and {} (at {}) are ' +
                         #        'neighbors.').format(i,self.at.x[i],j,self.at.x[j]))
-                        if self.nn[i] >= self.nmax:
+                        if self.nn[i] >= self.max_neigh:
                             warnflag += 1
                         else:
                             self.l[i,self.nn[i]] = j
                             self.nn[i] += 1
-                        if self.nn[j] >= self.nmax:
+                        if self.nn[j] >= self.max_neigh:
                             warnflag += 1
                         else:
                             self.l[j,self.nn[j]] = i
@@ -501,7 +613,9 @@ class NeighborClassMC(Neighbor):
                 warnings.warn('There were {} instances of attempts to add ' +
                               'neighbors beyond the set maximum neighbor number.\n' +
                               ' Those neighbors will be neglected.')
-                    
+            
+            self.last_build = self.grat.stepnum
+            
         return
     
     
@@ -540,7 +654,7 @@ class NeighborClassMC(Neighbor):
                 break
         linki = self.cell_links[cornind]
             
-        l = np.empty((self.nmax),dtype='uint32')
+        l = np.empty((self.max_neigh),dtype='uint32')
         l.fill(self.minus_one)
         
         other_atoms = list(range(0,self.n))
@@ -553,7 +667,7 @@ class NeighborClassMC(Neighbor):
                 continue
             d,dsq,_ = self.geom.distance(x,self.at.x[j])
             if d < self.cutoff:
-                if nn >= self.nmax:
+                if nn >= self.max_neigh:
                     warnflag += 1
                 else:
                     l[nn] = j
@@ -611,12 +725,17 @@ class NeighborClassMC(Neighbor):
             self.nn[j] = self.nn[j] + 1
         
         # Update the list entries for "index" particle
-        if len(new_neighbors) >= self.nmax:
+        if len(new_neighbors) >= self.max_neigh:
             raise Exception('Too many neighbors for particle {}'.format(index))
         self.nn[index] = len(new_neighbors)
         # print('index,nn: {},{}'.format(index,self.nn[index]))
         self.l[index,:self.nn[index]] = new_neighbors
         self.l[index,self.nn[index]:] = Neighbor.minus_one
+        
+        self.displ[index] += xnew - xold
+        
+        if np.max(np.sum(np.square(self.displ),axis=1)) > 0.5*self.skin_dist:
+            self.build(force=True)
         
         return None
         
@@ -695,12 +814,12 @@ class NeighborClassMC(Neighbor):
             if d <= (self.cutoff):
                 # print(('Particles {} (at {}) and {} (at {}) are ' +
                 #        'neighbors.').format(i,self.at.x[i],j,self.at.x[j]))
-                if self.nn[i] >= self.nmax:
+                if self.nn[i] >= self.max_neigh:
                     warnflag += 1
                 else:
                     self.l[i,self.nn[i]] = j
                     self.nn[i] += 1
-                if self.nn[j] >= self.nmax:
+                if self.nn[j] >= self.max_neigh:
                     warnflag += 1
                 else:
                     self.l[j,self.nn[j]] = i
