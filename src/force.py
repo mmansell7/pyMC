@@ -36,11 +36,8 @@ class Force(pointers.Pointers):
     def __init__(self,mc):
         super().__init__(mc)
         self.mc.force = self
+        self.en = np.nan # energy
         self.last_update = -1
-        self.en_external = 0.0
-        self.en_pair     = 0.0
-        self.en_total    = 0.0
-        self.update_all()
         return
     
     def update_all(self,**kwargs):
@@ -64,30 +61,19 @@ class Force(pointers.Pointers):
         if self.last_update >= self.grat.stepnum and kwargs.get('force',False):
             return
         
-        self.at.f[:self.at.n,:].fill(0.0)
-        self.at.en_pair[:self.at.n].fill(0.0)
+        self.en = 0.0
         for i in range(0,self.at.n):
             itype = self.at.atype[i]
             ext = self.at.external_type[itype]
-            en,f = ext.phi(self.at.x[i])
-            self.at.en_external[i] = en
-            self.at.f[i,:] += f[:]
+            self.en += ext.phi(self.at.x[i])[0]
             for j in self.neigh.l[i,:self.neigh.nn[i]]:
                 if j > i:
                     jtype = self.at.atype[j]
                     d,dsq,dr = self.geom.distance(self.at.x[i],self.at.x[j])
                     pair = self.at.pair_type[(itype,jtype)]
-                    en,f = pair.phi(dsq)
-                    self.at.en_pair[i] += en
-                    self.at.en_pair[j] += en
-                    self.at.f[i] -= dr*f
-                    self.at.f[j] += dr*f
-        
-        self.at.en_total = self.at.en_external + self.at.en_pair
-        self.en_external = np.sum(self.at.en_external[:self.at.n])
-        self.en_pair     = 1.0/2.0*np.sum(self.at.en_pair[:self.at.n])
-        self.en_total    = self.en_external + self.en_pair
-        
+                    self.en += pair.phi(dsq)[0]
+        self.last_update = self.grat.stepnum
+                    
         return
 
     def update_some(self,some):
@@ -147,6 +133,8 @@ class Force(pointers.Pointers):
         self.en_external = np.sum(self.at.en_external[:self.at.n])
         self.en_pair     = 1.0/2.0*np.sum(self.at.en_pair[:self.at.n])
         self.en_total    = self.en_external + self.en_pair
+        
+        self.last_update = self.grat.stepnum
         
         return
 
