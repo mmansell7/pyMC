@@ -63,7 +63,7 @@ class TestNeighborClass0():
         assert neigh.geom == g
         assert neigh.at == at
         assert neigh.at.neighbors[0] == neigh
-        assert neigh.nmax == 5
+        assert neigh.max_neigh == 5
         assert neigh.l.shape == (3,5)
         assert neigh.nn.shape == (3,)
         
@@ -149,7 +149,7 @@ class TestNeighborClassMC():
         assert neigh.geom == g
         assert neigh.at == at
         assert neigh.at.neighbors[0] == neigh
-        assert neigh.nmax == 5
+        assert neigh.max_neigh == 5
         assert neigh.l.shape == (3,5)
         assert neigh.nn.shape == (3,)
         
