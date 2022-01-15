@@ -20,15 +20,17 @@ class AtomListener(pointers.Pointers):
         return
     
     def atom_added(self):
-        raise Exception('atom_added method must be implemented by subclasses of AtomListener.')
+        raise NotImplementedError('atom_added method must be implemented by subclasses of AtomListener.')
     
     def atom_deleted(self):
-        raise Exception('atom_deleted method must be implemented by subclasses of AtomListener.')
+        raise NotImplementedError('atom_deleted method must be implemented by subclasses of AtomListener.')
     
     def atom_moved(self,ind,xold,xnew,dx):
-        raise Exception('atom_moved method must be implemented by subclasses of AtomListener.')
+        raise NotImplementedError('atom_moved method must be implemented by subclasses of AtomListener.')
     
     def atom_type_changed(self,ind,old_type,new_type):
-        raise Exception('atom_type_changed method must be implemented by subclasses of AtomListener.')
+        raise NotImplementedError('atom_type_changed method must be implemented by subclasses of AtomListener.')
     
-    
+    def grow(self,nmax):
+        raise NotImplementedError('grow method must be implemented by subclasses of AtomListener.')
+        
