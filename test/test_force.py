@@ -70,16 +70,19 @@ class TestForce():
         assert np.all(neigh.nn == np.array([1,1,-1],dtype='uint8'))
         
         frc = force.Force(mc)
-        assert np.abs(frc.en_external - 0.0) < 1.0E-8
-        assert np.abs(frc.en_pair + 0.14266117969821684) < 1.0E-8
-        assert np.abs(frc.en_total + 0.14266117969821684) < 1.0E-8
+        frc.update_all()
+        # assert np.abs(frc.en_external - 0.0) < 1.0E-8
+        # assert np.abs(frc.en_pair + 0.14266117969821684) < 1.0E-8
+        # assert np.abs(frc.en_total + 0.14266117969821684) < 1.0E-8
+        assert np.abs(frc.en +  0.14266117969821684) < 1.0E-8
         
         at.translate_atom(1,np.array([2.0,2.0,2.0]),ref='origin')
         
         frc.update_all()
-        assert np.abs(frc.en_external - 0.0) < 1.0E-8
-        assert np.abs(frc.en_pair + 0.0023134752229080954) < 1.0E-8
-        assert np.abs(frc.en_total + 0.0023134752229080954) < 1.0E-8
+        # assert np.abs(frc.en_external - 0.0) < 1.0E-8
+        # assert np.abs(frc.en_pair + 0.0023134752229080954) < 1.0E-8
+        # assert np.abs(frc.en_total + 0.0023134752229080954) < 1.0E-8
+        assert np.abs(frc.en + 0.0023134752229080954) < 1.0E-8
         
         ext2 = external_wall.ExternalWall(mc,['xlo','xhi'])
         at.external_type['1'] = ext2
@@ -87,9 +90,10 @@ class TestForce():
         at.pair_type[('0','1')] = p2
         at.add_atom(np.array([1.0,1.0,1.0]),np.array([0,0,0]),'1')
         frc.update_all()
-        assert np.abs(frc.en_external - 0.0) < 1.0E-8
-        assert np.abs(frc.en_pair - (-0.0023134752229080954 + 2*19.48971193415642)) < 1.0E-8
-        assert np.abs(frc.en_total - frc.en_external - frc.en_pair) < 1.0E-8
+        # assert np.abs(frc.en_external - 0.0) < 1.0E-8
+        # assert np.abs(frc.en_pair - (-0.0023134752229080954 + 2*19.48971193415642)) < 1.0E-8
+        # assert np.abs(frc.en_total - frc.en_external - frc.en_pair) < 1.0E-8
+        assert np.abs(frc.en - 0.0 - (-0.0023134752229080954 + 2*19.48971193415642)) < 1.0E-8
         
 
 
