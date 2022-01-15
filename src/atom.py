@@ -67,94 +67,101 @@ class Atom(pointers.Pointers):
         self.mc.at = self
         if nmax < 1:
             raise ValueError()
-        self.nmax = nmax
-        self.n = 0
-        self.x = np.empty((self.nmax,self.geom.ndim),dtype=float)
-        self.f = self.x.copy()
-        self.en_external = np.empty((self.nmax),dtype=float)
-        self.en_pair = np.empty((self.nmax),dtype=float)
-        self.en_total = np.empty((self.nmax),dtype=float)
-        self.im = np.empty((self.nmax,self.geom.ndim),dtype=int)
-        self.atype = np.empty((self.nmax),dtype=str)
+        
+        # Per-atom arrays
+        self.x = np.empty((nmax,self.geom.ndim),dtype=float)
+        self.x.fill(np.nan)
+        self.im = np.empty((nmax,self.geom.ndim),dtype=int)
+        self.atype = np.empty((nmax),dtype=str)
+        self.atype.fill('')
+        
+        # Per atom-type and pair-type arrays
         self.external_type = {}  # Map from atom type to external potential
         self.pair_type = {}  # Map from tuple of atom types to pair potential
+        
+        
         self.listeners = []  # Anything that needs to know when an atom is 
                              #  added, removed, moved, or otherwise changed
         self.primary_neigh = None
         return
     
-    def add_atom(self,x,im,atype,f=None,en_external=None,en_pair=None,en_total=None):
-        
+    @property
+    def nmax(self):
+        nmaxs = np.array([self.x.shape[0],self.im.shape[0],self.atype.shape[0]])
+        test = nmaxs - nmaxs[0]
+        if np.any(test != 0):
+            raise Exception('Inconsistent lengths of Atom class\'s internal ' +
+                            'arrays.')
+        else:
+            return nmaxs[0]
+    
+    @property
+    def n(self):
+        print('x,atype: {},{}'.format(self.x,self.atype))
+        a = np.where(np.any(np.isnan(self.x),axis=1))[0]
+        a = a[0] if a.shape[0] > 0 else self.x.shape[0]
+        b = np.where(self.atype=='')[0]
+        b = b[0] if b.shape[0] > 0 else self.atype.shape[0]
+        ns = np.array([a,b])
+        test = ns - ns[0]
+        if np.any(test != 0):
+            raise Exception('Inconsistent n deduced from Atom class\'s ' +
+                            'internal arrays.')
+        else:
+            return ns[0]
+    
+    def add_atom(self,x,im,atype):
+           
         if self.n < self.nmax:
-            self.x[self.n] = x
-            self.im[self.n] = im
-            self.atype[self.n] = atype
-            self.n += 1
+            n = self.n
+            self.x[n] = x
+            self.im[n] = im
+            self.atype[n] = atype
             
             for l in self.listeners:
                 l.atom_added(self.n)
                 
-            if (f is None) or (en_external is None) or (en_pair is None) or (
-                    en_total is None):
-                if hasattr(self,'force') and self.force is not None:
-                    self.force.update_some(np.array([self.n-1]))
-            else:
-                raise NotImplementedError('The current implementation on this ' +
-                            'execution branch would fail to update particles ' +
-                            'with which the added particle interacts.')
-                self.f[self.n] = f
-                self.en_external[self.n] = en_external
-                self.en_pair[self.n] = en_pair
-                self.en_total[self.n] = en_total
-                
-                if self.force is not None:
-                    self.force.en_external += en_external
-                    self.force.en_pair += en_pair
-                    self.force.en_total += en_total
-                    
         else:
             new_rows = np.ceil((self.grow_fact - 1.0)*self.nmax).astype(int)
-            self.x = np.append(self.x,np.empty((new_rows,self.geom.ndim),
+            self.grow(new_rows)
+            self.add_atom(x,im,atype)
+        
+        return
+       
+           
+    def grow(self,new_rows):
+            self.x = np.append(self.x,np.empty((new_rows,self.x.shape[1]),
                                                dtype=self.x.dtype),axis=0)
-            self.f = np.append(self.f,np.empty((new_rows,self.geom.ndim),
-                                               dtype=self.f.dtype),axis=0)
-            self.en_external = np.append(self.en_external,np.empty((new_rows),
-                                                 dtype=self.en_external.dtype),axis=0)
-            self.en_pair = np.append(self.en_pair,np.empty((new_rows),
-                                                 dtype=self.en_pair.dtype),axis=0)
-            self.en_total = np.append(self.en_total,np.empty((new_rows),
-                                                 dtype=self.en_total.dtype),axis=0)
-            self.im = np.append(self.im,np.empty((new_rows,self.geom.ndim),
+            self.x[-new_rows:].fill(np.nan)
+            self.im = np.append(self.im,np.empty((new_rows,self.im.shape[1]),
                                                dtype=self.im.dtype),axis=0)
             self.atype = np.append(self.atype,np.empty((new_rows),self.atype.dtype),axis=0)
-            self.nmax = self.x.shape[0]
-            self.add_atom(x,im,atype,f=f,en_external=en_external,
-                          en_pair=en_pair,en_total=en_total)
+            self.atype[-new_rows:].fill('')
             
-        return
-    
+            for l in self.listeners:
+                l.grow(self.nmax)
+                if l.nmax != self.nmax:
+                    raise Exception(('Atom listener {} has value of nmax that is ' +
+                                    'inconsistent with atom object.').format(l))
+           
     def delete_atom(self,ind):
+        n_start = self.n
+        print('Deleting from index {}'.format(n_start))
+        self.x[ind:n_start-1]  = self.x[ind+1:n_start]
+        self.x[n_start-1:] = np.nan
+        self.im[ind:n_start-1] = self.im[ind+1:n_start]
+        self.atype[ind:n_start-1] = self.atype[ind+1:n_start]
+        self.atype[n_start-1:] = ''
         
-        self.x[ind:self.n-1]  = self.x[ind+1:self.n]
-        self.x[self.n:] = np.nan
-        self.f[ind:self.n-1]  = self.f[ind+1:self.n]
-        self.f[self.n:] = np.nan
-        self.en_external[ind:self.n-1] = self.en_external[ind+1:self.n]
-        self.en_external[self.n:] = np.nan
-        self.en_pair[ind:self.n-1] = self.en_pair[ind+1:self.n]
-        self.en_pair[self.n:] = np.nan
-        self.en_total[ind:self.n-1] = self.en_total[ind+1:self.n]
-        self.en_total[self.n:] = np.nan
-        self.im[ind:self.n-1] = self.im[ind+1:self.n]
-        self.atype[ind:self.n-1] = self.atype[ind+1:self.n]
-        self.n -= 1
         for l in self.listeners:
             l.atom_removed(ind)
+            if l.n != self.n:
+                raise Exception(('Atom listender {} has n value inconsistent ' +
+                                'with Atom object.').format(l))
         
         return
         
-    def translate_atom(self,ind,x,ref=None,f=None,en_external=None,
-                       en_pair=None,en_total=None):
+    def translate_atom(self,ind,x,ref=None):
         if ref == 'origin':
             x0 = np.zeros(self.geom.ndim,dtype=float)
             im0 = np.array([0,0,0],dtype=int)
@@ -170,33 +177,6 @@ class Atom(pointers.Pointers):
         self.x[ind] = xnew
         self.im[ind] = imnew
         
-        if (f is None) or (en_external is None) or (en_pair is None) or (
-                    en_total is None):
-                if hasattr(self,'force') and self.force is not None:
-                    self.force.update_some(np.array([ind]))
-        else:
-            raise NotImplementedError('The current implementation of ' +
-                    'translate_atom with f,en_external,en_pair, or en_total ' +
-                    'not None fails to update neighbors of the translated ' +
-                    'particle, and therefore, yields unexpected or incorrect ' +
-                    'results.')
-            f0 = self.f[ind]
-            self.f[ind] = f
-            
-            en_external0 = self.en_external[ind]
-            self.en_external[ind] = en_external
-            
-            en_pair0 = self.en_pair[ind]
-            self.en_pair[ind] = en_pair
-            
-            en_total0 = self.en_total[ind]
-            self.en_total[ind] = en_total
-            
-            if self.force is not None:
-                self.force.en_external += en_external - en_external0
-                self.force.en_pair += en_pair - en_pair0
-                self.force.en_total += en_total - en_total0
-                
         for l in self.listeners:
             l.atom_translated(ind,xold,xnew,dx)
         return
