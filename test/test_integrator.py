@@ -27,16 +27,16 @@ import trial
 class TestIntegrator():
     
     def test_instantiate(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-10.0,-10.0,-10.0],[10.0,10.0,10.0]],dtype=float)
         bcs = np.array(['periodic','periodic','fixed'])
         g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         at = atom.Atom(mc,3)
         # grat = integrator.Integrator(at,seed=0)
-        grat = integrator.Integrator(mc,0)
+        grat = integrator.Integrator(mc)
     
     def test_step(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         mc.kB = 1.0
         x = np.array([[-10.0,-10.0,-10.0],[10.0,10.0,10.0]],dtype=float)
         bcs = np.array(['periodic','periodic','fixed'])
@@ -49,7 +49,7 @@ class TestIntegrator():
         p = pair_lj_cut.PairLJCut(1.0,1.0,5.0)
         at.pair_type[('0','0')] = p
         # grat = integrator.Integrator(at,seed=0)
-        grat = integrator.Integrator(mc,0)
+        grat = integrator.Integrator(mc)
         grat.T = 100.0
         neigh = neighbor.NeighborClassMC(mc,5,np.array([1,1,1]),7.5)
         frc = force.Force(mc)

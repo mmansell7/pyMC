@@ -22,7 +22,7 @@ import external_harmonic
 class TestExternalHarmonic():
     
     def test_create1(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-11.1,-22.2,-33.3],[12.3,45.6,78.9]],dtype=float)
         bcs = np.array(['fixed','fixed','fixed'])
         g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
@@ -35,7 +35,7 @@ class TestExternalHarmonic():
         return
     
     def test_create_fail1(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         mc.geom = np.empty(3)
         
         k  = 1.1
@@ -45,7 +45,7 @@ class TestExternalHarmonic():
         return
     
     def test_create_fail2(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-11.1,-22.2,-33.3],[12.3,45.6,78.9]],dtype=float)
         bcs = np.array(['fixed','fixed','fixed'])
         g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
@@ -57,7 +57,7 @@ class TestExternalHarmonic():
         return
     
     def test_phi(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-11.1,-22.2,-33.3],[12.3,45.6,78.9]],dtype=float)
         bcs = np.array(['fixed','fixed','fixed'])
         g = geometry_cartesian_box.CartesianBox(mc,x,bcs)

@@ -24,7 +24,7 @@ import force
 class TestForce():
     
     def test_instantiate(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-10.0,-10.0,-10.0],[10.0,10.0,10.0]],dtype=float)
         bcs = np.array(['periodic','periodic','fixed'])
         g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
@@ -32,7 +32,7 @@ class TestForce():
         at.add_atom(np.array([0.0,0.0,0.0]),np.array([1,2,0],dtype='int'),'0')
         at.add_atom(np.array([1.0,1.0,1.0]),np.array([11,12,0],dtype='int'),'0')
         # mc = integrator.IntegratorMC_mu_geom_T_1(  at,1.0,g,1.0,0.1,0)
-        grat = integrator.Integrator(mc,1)
+        grat = integrator.Integrator(mc)
         mo = neighbor.Neighbor.minus_one
         ext = external_wall.ExternalWall(mc,['xlo','xhi'])
         at.external_type['0'] = ext
@@ -48,7 +48,7 @@ class TestForce():
         frc = force.Force(mc)
         
     def test_update_all(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-10.0,-10.0,-10.0],[10.0,10.0,10.0]],dtype=float)
         bcs = np.array(['periodic','periodic','fixed'])
         g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
@@ -56,7 +56,7 @@ class TestForce():
         at.add_atom(np.array([0.0,0.0,0.0]),np.array([1,2,0],dtype='int'),'0')
         at.add_atom(np.array([1.0,1.0,1.0]),np.array([11,12,0],dtype='int'),'0')
         # mc = integrator.IntegratorMC_mu_geom_T_1(at,1.0,g,1.0,0.1,0)
-        grat = integrator.Integrator(mc,1)
+        grat = integrator.Integrator(mc)
         mo = neighbor.Neighbor.minus_one
         ext1 = external_wall.ExternalWall(mc,['xlo','xhi'])
         at.external_type['0'] = ext1

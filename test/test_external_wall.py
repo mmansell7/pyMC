@@ -22,7 +22,7 @@ import external_wall
 class TestExternalWall():
     
     def test_create_1(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-1,-2,-3],[1,2,3]],dtype=float)
         bcs = np.array(['fixed','periodic','fixed'])
         g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
@@ -32,7 +32,7 @@ class TestExternalWall():
         return
     
     def test_create_fails1(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-1,-2,-3],[1,2,3]],dtype=float)
         bcs = np.array(['fixed','periodic','fixed'])
         g = geometry.Geometry(mc)
@@ -42,7 +42,7 @@ class TestExternalWall():
         return
     
     def test_create_fails2(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-1,-2,-3,-4],[1,2,3,4]],dtype=float)
         bcs = np.array(['fixed','periodic','fixed','fixed'])
         g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
@@ -52,7 +52,7 @@ class TestExternalWall():
         return
     
     def test_create_fails3(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-1,-2,-3],[1,2,3]],dtype=float)
         bcs = np.array(['fixed','periodic','fixed'])
         g = geometry.Geometry(mc)
@@ -62,7 +62,7 @@ class TestExternalWall():
         return
     
     def test_create_fails4(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-1,-2,-3],[1,2,3]],dtype=float)
         bcs = np.array(['fixed','periodic','fixed'])
         g = geometry.Geometry(mc)
@@ -72,7 +72,7 @@ class TestExternalWall():
         return
     
     def test_phi(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-1,-2,-3],[1,2,3]],dtype=float)
         bcs = np.array(['fixed','periodic','fixed'])
         g = geometry_cartesian_box.CartesianBox(mc,x,bcs)

@@ -19,7 +19,7 @@ import atom
 class TestAtom():
     
     def test_create_1(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-1.0,-1.0,-1.0],[1.0,1.0,1.0]],dtype=float)
         bcs = np.array(['fixed','fixed','fixed'])
         g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
@@ -29,7 +29,7 @@ class TestAtom():
         return
         
     def test_create_fails_2(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-1.0,-1.0,-1.0],[1.0,1.0,1.0]],dtype=float)
         bcs = np.array(['fixed','fixed','fixed'])
         g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
@@ -38,7 +38,7 @@ class TestAtom():
         return
     
     def test_init_1(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-1.0,-1.0,-1.0],[1.0,1.0,1.0]],dtype=float)
         bcs = np.array(['fixed','fixed','fixed'])
         g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
@@ -51,7 +51,7 @@ class TestAtom():
         return
     
     def test_add_atom_1(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-10.0,-10.0,-10.0],[10.0,10.0,10.0]],dtype=float)
         bcs = np.array(['fixed','fixed','fixed'])
         g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
@@ -88,7 +88,7 @@ class TestAtom():
         return
 
     def test_translate_atom_1(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-10.0,-10.0,-10.0],[10.0,10.0,10.0]],dtype=float)
         bcs = np.array(['periodic','periodic','fixed'])
         g = geometry_cartesian_box.CartesianBox(mc,x,bcs)

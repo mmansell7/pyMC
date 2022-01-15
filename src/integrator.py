@@ -13,13 +13,16 @@ import neighbor
 
 class Integrator(pointers.Pointers):
     
-    def __init__(self,mc,seed):
+    def __init__(self,mc):
         super().__init__(mc)
         self.mc.grat = self
         self.__trials = []
         self.probs = []
         self.stepnum = 0
-        self.rng = np.random.default_rng(seed=seed)
+    
+    @property
+    def rng(self):
+        return self.mc.rng
     
     @property
     def trials(self):
@@ -41,8 +44,8 @@ class Integrator(pointers.Pointers):
 
 class IntegratorMC_mu_geom_T_1(Integrator):
     
-    def __init__(self,mc,mu,T,max_move,seed):
-        super().__init__(mc,seed)
+    def __init__(self,mc,mu,T,max_move):
+        super().__init__(mc)
         self.mu = mu
         self.T = T
         self.max_move = max_move

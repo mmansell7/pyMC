@@ -6,11 +6,12 @@ Created on Wed Jan 12 20:15:00 2022
 @author: mattmansell
 """
 
-
+import numpy as np
 
 class Sim():
     
-    def __init__(self):
+    def __init__(self,seed):
+        self.rng = np.random.default_rng(seed=seed)
         self.__kB = None
         self.__h  = None
     

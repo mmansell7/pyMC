@@ -23,14 +23,14 @@ import pair_lj_cut
 class TestNeighbor():
     
     def test_fail_to_create_abstract_1(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-10.0,-10.0,-10.0],[10.0,10.0,10.0]],dtype=float)
         bcs = np.array(['periodic','periodic','fixed'])
         g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         at = atom.Atom(mc,3)
         at.add_atom(np.array([0.0,0.0,0.0]),np.array([1,2,0],dtype='int'),'0')
         at.add_atom(np.array([1.0,1.0,1.0]),np.array([11,12,0],dtype='int'),'1')
-        grat = integrator.IntegratorMC_mu_geom_T_1(mc,1.0,1.0,0.1,0)
+        grat = integrator.IntegratorMC_mu_geom_T_1(mc,1.0,1.0,0.1)
         neigh = neighbor.Neighbor(mc,5.0)
         with pytest.raises(NotImplementedError) as excinfo:
             neigh.calc_one_atom(0)
@@ -51,14 +51,14 @@ class TestNeighbor():
 class TestNeighborClass0():
     
     def test_instantiate(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-10.0,-10.0,-10.0],[10.0,10.0,10.0]],dtype=float)
         bcs = np.array(['periodic','periodic','fixed'])
         g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         at = atom.Atom(mc,3)
         at.add_atom(np.array([0.0,0.0,0.0]),np.array([1,2,0],dtype='int'),'0')
         at.add_atom(np.array([1.0,1.0,1.0]),np.array([11,12,0],dtype='int'),'1')
-        grat = integrator.IntegratorMC_mu_geom_T_1(mc,1.0,1.0,0.1,0)
+        grat = integrator.IntegratorMC_mu_geom_T_1(mc,1.0,1.0,0.1)
         neigh = neighbor.NeighborClass0(mc,5,5.0)
         assert neigh.geom == g
         assert neigh.at == at
@@ -68,14 +68,14 @@ class TestNeighborClass0():
         assert neigh.nn.shape == (3,)
         
     def test_build_1(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-10.0,-10.0,-10.0],[10.0,10.0,10.0]],dtype=float)
         bcs = np.array(['periodic','periodic','fixed'])
         g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         at = atom.Atom(mc,3)
         at.add_atom(np.array([0.0,0.0,0.0]),np.array([1,2,0],dtype='int'),'0')
         at.add_atom(np.array([1.0,1.0,1.0]),np.array([11,12,0],dtype='int'),'1')
-        grat = integrator.IntegratorMC_mu_geom_T_1(mc,1.0,1.0,0.1,0)
+        grat = integrator.IntegratorMC_mu_geom_T_1(mc,1.0,1.0,0.1)
         neigh = neighbor.NeighborClass0(mc,5,5.0)
         mo = neigh.minus_one
         p = pair_lj_cut.PairLJCut(1.0,1.0,5.0)
@@ -91,7 +91,7 @@ class TestNeighborClass0():
         return
         
     def test_build_2(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-10.0,-10.0,-10.0],[10.0,10.0,10.0]],dtype=float)
         bcs = np.array(['periodic','periodic','fixed'])
         g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
@@ -102,7 +102,7 @@ class TestNeighborClass0():
         at.add_atom(np.array([5.4,5.4,5.4]),np.array([11,12,0],dtype='int'),'0')
         at.add_atom(np.array([9.7,9.7,9.7]),np.array([11,12,0],dtype='int'),'0')
         at.add_atom(np.array([9.8,9.8,9.8]),np.array([11,12,0],dtype='int'),'0')
-        grat = integrator.IntegratorMC_mu_geom_T_1(mc,1.0,1.0,0.1,0)
+        grat = integrator.IntegratorMC_mu_geom_T_1(mc,1.0,1.0,0.1)
         neigh = neighbor.NeighborClass0(mc,5,7.5)
         mo = neighbor.Neighbor.minus_one
         p = pair_lj_cut.PairLJCut(1.0,1.0,5.0)
@@ -135,7 +135,7 @@ class TestNeighborClass0():
 class TestNeighborClassMC():
     
     def test_instantiate(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-10.0,-10.0,-10.0],[10.0,10.0,10.0]],dtype=float)
         bcs = np.array(['periodic','periodic','fixed'])
         g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
@@ -144,7 +144,7 @@ class TestNeighborClassMC():
         at.add_atom(np.array([1.0,1.0,1.0]),np.array([11,12,0],dtype='int'),'1')
         p = pair_lj_cut.PairLJCut(1.0,1.0,5.0)
         at.pair_type[('0','1')] = p
-        grat = integrator.IntegratorMC_mu_geom_T_1(mc,1.0,1.0,0.1,0)
+        grat = integrator.IntegratorMC_mu_geom_T_1(mc,1.0,1.0,0.1)
         neigh = neighbor.NeighborClassMC(mc,5,np.array([1,1,1]),7.5)
         assert neigh.geom == g
         assert neigh.at == at
@@ -154,14 +154,14 @@ class TestNeighborClassMC():
         assert neigh.nn.shape == (3,)
         
     def test_build_1(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-10.0,-10.0,-10.0],[10.0,10.0,10.0]],dtype=float)
         bcs = np.array(['periodic','periodic','fixed'])
         g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
         at = atom.Atom(mc,3)
         at.add_atom(np.array([0.0,0.0,0.0]),np.array([1,2,0],dtype='int'),'0')
         at.add_atom(np.array([1.0,1.0,1.0]),np.array([11,12,0],dtype='int'),'1')
-        grat = integrator.IntegratorMC_mu_geom_T_1(mc,1.0,1.0,0.1,0)
+        grat = integrator.IntegratorMC_mu_geom_T_1(mc,1.0,1.0,0.1)
         neigh = neighbor.NeighborClassMC(mc,5,np.array([1,1,1]),7.5)
         mo = neigh.minus_one
         p = pair_lj_cut.PairLJCut(1.0,1.0,5.0)
@@ -177,7 +177,7 @@ class TestNeighborClassMC():
         return
         
     def test_build_2(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-10.0,-10.0,-10.0],[10.0,10.0,10.0]],dtype=float)
         bcs = np.array(['periodic','periodic','fixed'])
         g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
@@ -190,7 +190,7 @@ class TestNeighborClassMC():
         at.add_atom(np.array([9.8,9.8,9.8]),np.array([11,12,0],dtype='int'),'0')
         p = pair_lj_cut.PairLJCut(1.0,1.0,5.0)
         at.pair_type[('0','0')] = p
-        grat = integrator.IntegratorMC_mu_geom_T_1(mc,1.0,1.0,0.1,0)
+        grat = integrator.IntegratorMC_mu_geom_T_1(mc,1.0,1.0,0.1)
         mo = neighbor.Neighbor.minus_one
         
         neigh = neighbor.NeighborClassMC(mc,5,np.array([1,1,1]),7.5)
@@ -298,7 +298,7 @@ class TestNeighborClassMC():
         
     
     def test_add_many_atoms(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-10.0,-10.0,-10.0],[10.0,10.0,10.0]],dtype=float)
         bcs = np.array(['periodic','periodic','fixed'])
         g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
@@ -307,7 +307,7 @@ class TestNeighborClassMC():
         at.add_atom(np.array([ -9.99,-9.99, -9.99]),np.array([0,0,0],dtype='int'),'0')
         p = pair_lj_cut.PairLJCut(1.0,1.0,5.0)
         at.pair_type[('0','0')] = p
-        grat = integrator.IntegratorMC_mu_geom_T_1(mc,1.0,1.0,0.1,0)
+        grat = integrator.IntegratorMC_mu_geom_T_1(mc,1.0,1.0,0.1)
         mo = neighbor.Neighbor.minus_one
         
         neigh = neighbor.NeighborClassMC(mc,5,np.array([1,1,1]),1.01*0.02*np.sqrt(3))

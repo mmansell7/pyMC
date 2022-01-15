@@ -26,7 +26,7 @@ import trial
 class TestTrialTranslate():
     
     def test_instantiate(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-10.0,-10.0,-10.0],[10.0,10.0,10.0]],dtype=float)
         bcs = np.array(['periodic','periodic','fixed'])
         g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
@@ -38,14 +38,14 @@ class TestTrialTranslate():
         p = pair_lj_cut.PairLJCut(1.0,1.0,5.0)
         at.pair_type[('0','0')] = p
         # grat = integrator.Integrator(at,seed=0)
-        grat = integrator.Integrator(mc,0)
+        grat = integrator.Integrator(mc)
         neigh = neighbor.NeighborClassMC(mc,5,np.array([1,1,1]),7.5)
         frc = force.Force(mc)
         
         grat.add_trial(trial.Trial_Translation(mc,1.0,'0'),1)
         
     def test_energy_decrease_1(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-10.0,-10.0,-10.0],[10.0,10.0,10.0]],dtype=float)
         bcs = np.array(['periodic','periodic','fixed'])
         g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
@@ -57,7 +57,7 @@ class TestTrialTranslate():
         p = pair_lj_cut.PairLJCut(1.0,1.0,5.0)
         at.pair_type[('0','0')] = p
         # grat = integrator.Integrator(at,seed=0)
-        grat = integrator.Integrator(mc,0)
+        grat = integrator.Integrator(mc)
         neigh = neighbor.NeighborClassMC(mc,5,np.array([1,1,1]),7.5)
         frc = force.Force(mc)
         
@@ -90,7 +90,7 @@ class TestTrialTranslate():
     
     
     def test_energy_increase_1(self):
-        mc = sim.Sim()
+        mc = sim.Sim(0)
         x = np.array([[-10.0,-10.0,-10.0],[10.0,10.0,10.0]],dtype=float)
         bcs = np.array(['periodic','periodic','fixed'])
         g = geometry_cartesian_box.CartesianBox(mc,x,bcs)
@@ -102,7 +102,7 @@ class TestTrialTranslate():
         p = pair_lj_cut.PairLJCut(1.0,1.0,5.0)
         at.pair_type[('0','0')] = p
         # grat = integrator.Integrator(at,seed=0)
-        grat = integrator.Integrator(mc,0)
+        grat = integrator.Integrator(mc)
         neigh = neighbor.NeighborClassMC(mc,5,np.array([1,1,1]),7.5)
         neigh.build(force=True)
         frc = force.Force(mc)
