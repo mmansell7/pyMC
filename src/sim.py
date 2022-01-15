@@ -11,7 +11,8 @@ Created on Wed Jan 12 20:15:00 2022
 class Sim():
     
     def __init__(self):
-        return
+        self.__kB = None
+        self.__h  = None
     
     @property
     def at(self):
@@ -73,6 +74,30 @@ class Sim():
             raise Exception("Cannot reset grat once it is set.")
         else:
             self.__grat = grat
+        return
+    
+    @property
+    def kB(self):
+        return self.__kB
+    
+    @kB.setter
+    def kB(self,val):
+        if self.__kB is None:
+            self.__kB = val
+        else:
+            raise Exception('Cannot re-set kB.')
+        return
+    
+    @property
+    def h(self):  # Planck constant
+        return self.__h
+    
+    @h.setter
+    def h(self,val):
+        if self.__h is None:
+            self.__h = val
+        else:
+            raise Exception('Cannot re-set h.')
         return
     
     
